@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Waste | Digital Waste Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+  <h2>Track Reported Waste</h2>
+  <div id="map" style="height: 600px; border-radius: 10px;"></div>
+<script>
+  // Use the shared initTrackMap function (defined in script.js)
+  document.addEventListener('DOMContentLoaded', function(){
+    if (typeof window.initTrackMap === 'function'){
+      window.initTrackMap({
+        mapId: 'map',
+        center: [-33.8688, 151.2093],
+        zoom: 11,
+        refreshMs: 15000,
+        // server-side template will expand this to the uploads folder URL
+        imageBase: "{{ url_for('static', filename='uploads') }}"
+      });
+    } else {
+      console.warn('initTrackMap not available yet. Make sure script.js is loaded before this file.');
+    }
+  });
+  </script>
+</body>
+</html>

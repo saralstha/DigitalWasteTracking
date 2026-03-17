@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Waste | Digital Waste Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+async function submitReport() {
+
+  const loc = document.getElementById('location').value;
+  const type = document.getElementById('type').value;
+  const weight = document.getElementById('weight').value;
+  const file = document.getElementById('photo').files[0];
+
+  const formData = new FormData();
+  formData.append("location", loc);
+  formData.append("type", type);
+  formData.append("weight", weight);
+  formData.append("photo", file);
+
+  await fetch('/api/report', {
+    method: 'POST',
+    body: formData
+  });
+
+  alert("Waste report submitted!");
+
+  document.getElementById("reportForm").reset();
+
+  loadReports();
+}
+
+
+  </script>
+</body>
+</html>

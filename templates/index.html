@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EWaste - Smart E-Waste Management</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <i class="fas fa-recycle"></i><span>EWaste</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#report">Report</a></li>
+        <li><a href="#track">Track</a></li>
+        <li><a href="#about">About</a></li>
+        <li><button class="btn btn-primary" onclick="openModal('login')">Login</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero">
+    <div class="container">
+      <h1>Digital Waste Tracking System</h1>
+      <p>Monitor, manage, and recycle e-waste responsibly for a greener future.</p>
+      <button class="btn btn-primary" onclick="scrollToSection('report')">Report Waste</button>
+      <button class="btn btn-secondary" onclick="scrollToSection('track')">View Map</button>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section id="services" class="services">
+    <div class="container">
+      <h2>Our Services</h2>
+      <div class="services-grid">
+        <div class="service-card">
+          <i class="fas fa-home"></i>
+          <h3>Residential Pickup</h3>
+          <p>Convenient e-waste collection from your home with flexible scheduling.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-building"></i>
+          <h3>Business Solutions</h3>
+          <p>Enterprise-grade waste management with compliance reporting.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-industry"></i>
+          <h3>Industrial Recycling</h3>
+          <p>Large-scale e-waste processing and recycling for industries.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Waste Reporting Section -->
+  <!-- Report Waste Section -->
+<section id="report" class="report-section" style="padding:70px 0; background-color:#e8f5e9;">
+  <div class="container" style="max-width:850px; margin:auto;">
+    <h2 style="font-size:2.2rem; text-align:center; color:#145a32; margin-bottom:15px;">Report Waste</h2>
+    <p style="text-align:center; font-size:1.1rem; color:#333; margin-bottom:40px;">
+      Help us keep Sydney clean! Use this form to report uncollected or illegal waste.  
+      Upload a clear photo and include as much detail as possible.
+    </p>
+
+    <form id="reportForm" enctype="multipart/form-data" 
+          style="background:#fff; padding:35px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:20px;">
+        <div>
+          <label for="location" style="font-weight:600;">Location (Suburb or Address)</label>
+          <input type="text" id="location" name="location" placeholder="e.g., Parramatta" required
+                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+        </div>
+        <div>
+          <label for="type" style="font-weight:600;">Waste Type</label>
+          <select id="type" name="type" required
+                  style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+            <option value="">Select Type</option>
+            <option>Plastic</option>
+            <option>Metal</option>
+            <option>Electronic</option>
+            <option>Organic</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px;">
+        <div>
+          <label for="weight" style="font-weight:600;">Approximate Weight (kg)</label>
+          <input type="number" id="weight" name="weight" placeholder="e.g., 5" required
+                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+        </div>
+        <div>
+          <label for="photo" style="font-weight:600;">Upload Waste Photo</label>
+          <input type="file" id="photo" name="photo" accept="image/*" required
+                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:30px;">
+        <button type="button" class="btn btn-primary" 
+                onclick="submitReport()" 
+                style="background:#2e7d32; color:#fff; border:none; padding:12px 28px; border-radius:10px; font-size:1rem;">
+          Submit Report
+        </button>
+      </div>
+    </form>
+
+    <div id="reportLog" style="margin-top:40px; background:#fff; border-radius:10px; padding:25px; box-shadow:0 3px 8px rgba(0,0,0,0.08);">
+      <strong style="color:#145a32; font-size:1.2rem;">Recent Reports:</strong>
+      <div id="reportList" style="margin-top:10px; color:#555; line-height:1.6;">
+        <em>No reports yet.</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+  <!-- Tracking Map Section -->
+  <section id="track" class="track-section" style="background-color:#f4f8f7; padding:60px 0;">
+  <div class="container" style="max-width:1000px; margin:auto; text-align:center;">
+    <h2 style="font-size:2.2rem; color:#145a32; margin-bottom:10px;">Track Reported Waste</h2>
+    <p style="font-size:1.1rem; color:#444; margin-bottom:25px;">
+      View real-time waste collection and reporting activity across Sydney.  
+      Click on any map marker to see details about the reported waste type and location.
+    </p>
+
+    <div id="map" 
+         style="height:500px; border-radius:16px; border:2px solid #ddd; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+    </div>
+
+    <p style="margin-top:20px; color:#555;">Map powered by <b>OpenStreetMap</b> and <b>Leaflet.js</b>.</p>
+  </div>
+</section>
+
+  <!-- About Section -->
+  <!-- About Us Section -->
+<section id="about" class="about-section" style="background-color:#f4f7f6; padding:70px 0;">
+  <div class="container" style="max-width:900px; margin:auto; text-align:center;">
+    <h2 style="font-size:2.3rem; color:#145a32; margin-bottom:15px;">About Our Project</h2>
+    <p style="font-size:1.1rem; color:#444; line-height:1.7; margin-bottom:35px;">
+      The <strong>Digital Waste Tracker</strong> is an innovative solution developed to simplify and 
+      modernize waste management across Sydney. By combining technology, sustainability, and data 
+      insights, our platform empowers individuals, organizations, and councils to track, manage, 
+      and report waste efficiently. We believe that smart monitoring and digital transparency 
+      can help create a cleaner, greener, and more sustainable future.
+    </p>
+
+    <div style="background:#fff; padding:30px; border-radius:12px; box-shadow:0 3px 10px rgba(0,0,0,0.1);">
+      <h3 style="color:#2e7d32;">Our Team</h3>
+      <p style="color:#555; margin-top:10px;">
+        <strong>Members:</strong> Pujan, Ganesh, Divya, Prashant, and Saral <br>
+        <strong>Supervisor:</strong> Dr. Ayesha Sohail
+      </p>
+    </div>
+  </div>
+</section>
+
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 EWaste | Built for a Greener Future</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Initialize map (centered on Sydney)
+    const map = L.map('map').setView([-33.8688, 151.2093], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    async function getCoordinates(location) {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location + ', Sydney, Australia')}`);
+      const data = await res.json();
+      return data.length ? [data[0].lat, data[0].lon] : null;
+    }
+    async function loadReports() {
+
+  const res = await fetch('/api/reports');
+  const data = await res.json();
+
+  for (const r of data) {
+
+    const coords = await getCoordinates(r.location);
+
+    if(coords){
+
+      const marker = L.marker(coords).addTo(map);
+
+      marker.bindPopup(
+        `<b>${r.type} Waste</b><br>${r.weight} kg<br>${r.location}`
+      );
+
+    }
+
+  }
+
+}
+
+loadReports();
+
+
+   
+
+async function submitReport() {
+
+  const loc = document.getElementById('location').value;
+  const type = document.getElementById('type').value;
+  const weight = document.getElementById('weight').value;
+  const file = document.getElementById('photo').files[0];
+
+  if(!file){
+    alert("Please upload a photo");
+    return;
+  }
+
+  const coords = await getCoordinates(loc);
+
+  if (!coords){
+    alert('Invalid location');
+    return;
+  }
+
+  const [lat, lon] = coords;
+
+  const formData = new FormData();
+
+  formData.append("location", loc);
+  formData.append("type", type);
+  formData.append("weight", weight);
+  formData.append("photo", file);
+  formData.append("lat", lat);
+  formData.append("lon", lon);
+
+  const res = await fetch('/api/report', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+
+  const marker = L.marker([lat, lon]).addTo(map);
+
+  marker.bindPopup(`
+    <b>${type} Waste</b><br>
+    ${weight} kg<br>
+    ${loc}<br>
+    <img src="static/uploads/${file.name}" width="120">
+  `);
+
+  document.getElementById('reportForm').reset();
+}
+
+
+  </script>
+  
+</div>
+<!-- Login Modal -->
+<div id="loginModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('login')">&times;</span>
+    <h2>Login to EWaste</h2>
+    <form id="loginForm">
+      <label>Mobile number (NSW)</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="tel" id="loginMobile" name="mobile" placeholder="04XXXXXXXX" pattern="\d{8,12}" required style="flex:1;">
+        <button type="button" id="loginSendCodeBtn" class="btn" style="padding:6px 10px;">Send code</button>
+      </div>
+      <small id="loginSendCodeMsg" style="color:#555; display:block; margin-top:6px;"></small>
+      <label style="margin-top:8px; display:block;">4-digit code</label>
+      <input type="text" id="loginCode" name="code" placeholder="1234" maxlength="4" pattern="\d{4}" required>
+      <div style="margin-top:12px; text-align:right;">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+    </form>
+    <p style="margin-top:12px;">New user? <a href="#" onclick="switchModal()">Sign up here</a></p>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('signup')">&times;</span>
+    <h2>Create an Account</h2>
+    <form id="signupForm">
+      <label>Full Name</label>
+      <input type="text" id="signupName" name="name" required>
+      <label>Mobile number (NSW)</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="tel" id="signupMobile" name="mobile" placeholder="04XXXXXXXX" pattern="\d{8,12}" required style="flex:1;">
+        <button type="button" id="signupSendCodeBtn" class="btn" style="padding:6px 10px;">Send code</button>
+      </div>
+      <small id="signupSendCodeMsg" style="color:#555; display:block; margin-top:6px;"></small>
+      <label style="margin-top:8px; display:block;">4-digit code</label>
+      <input type="text" id="signupCode" name="code" placeholder="1234" maxlength="4" pattern="\d{4}" required>
+  <!-- Licence removed from signup to simplify flow: only name, mobile and 4-digit PIN required -->
+      <div style="margin-top:12px; text-align:right;">
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </div>
+    </form>
+    <p style="margin-top:12px;">Already have an account? <a href="#" onclick="switchModal()">Login here</a></p>
+  </div>
+</div>
+
+<!-- Profile Modal (shown after signup or for editing profile) -->
+<div id="profileModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeProfileModal()">&times;</span>
+    <h2>Your Profile</h2>
+    <form id="profileForm">
+      <label>Full Name</label>
+      <input type="text" id="profileName" name="name" required>
+
+      <label>Mobile number</label>
+      <input type="tel" id="profileMobile" name="mobile" readonly>
+
+  <label>NSW Licence Number (optional)</label>
+  <input type="text" id="profileLicence" name="licence">
+
+      <label>Address (optional)</label>
+      <input type="text" id="profileAddress" name="address" placeholder="Suburb or address">
+
+      <label>Profile photo (optional)</label>
+      <input type="file" id="profilePhoto" name="photo" accept="image/*">
+
+      <div style="margin-top:12px; text-align:right;">
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+      </div>
+    </form>
+    <p style="margin-top:12px; color:#555;">You can edit your profile later from your account page.</p>
+  </div>
+</div>
+
+<script>
+  // Simple modal helpers in case other scripts are not loaded
+  function openModal(which){
+    if (which === 'login') document.getElementById('loginModal').style.display = 'block';
+    if (which === 'signup') document.getElementById('signupModal').style.display = 'block';
+  }
+  function closeModal(which){
+    if (which === 'login') document.getElementById('loginModal').style.display = 'none';
+    if (which === 'signup') document.getElementById('signupModal').style.display = 'none';
+  }
+  function switchModal(){
+    // Switch between login and signup modals
+    const l = document.getElementById('loginModal');
+    const s = document.getElementById('signupModal');
+    if (l.style.display === 'block'){
+      l.style.display = 'none'; s.style.display = 'block';
+    } else { s.style.display = 'none'; l.style.display = 'block'; }
+  }
+
+  // Basic validators
+  function validateMobile(m){
+    if (!m) return false;
+    // Accept digits, spaces, +; require at least 8 digits total (covers local formats)
+    const digits = m.replace(/\D/g, '');
+    return digits.length >= 8 && digits.length <= 12;
+  }
+  function validate4DigitCode(c){ return /^\d{4}$/.test(c); }
+  function validateLicence(l){
+    if (!l) return false;
+    // NSW licence numbers vary; accept 5-12 alphanumeric chars as a reasonable constraint
+    return /^[A-Z0-9]{5,12}$/i.test(l.replace(/\s+/g,''));
+  }
+  function normalizeMobile(m){
+    if (!m) return '';
+    return m.replace(/\D/g, '');
+  }
+
+  // Login form handler
+  document.getElementById('loginForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    let mobile = document.getElementById('loginMobile').value.trim();
+    const code = document.getElementById('loginCode').value.trim();
+    if (!validateMobile(mobile)) return alert('Please enter a valid mobile number.');
+    if (!validate4DigitCode(code)) return alert('Please enter the 4-digit code.');
+
+    mobile = normalizeMobile(mobile);
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ mobile, code })
+      });
+      if (!res.ok) {
+        let errMsg = `Login failed (status ${res.status})`;
+        try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); } catch(e){ try { const t = await res.text(); if (t) errMsg = t; } catch(e){} }
+        throw new Error(errMsg);
+      }
+      const json = await res.json();
+      closeModal('login');
+      alert(json.message || 'Logged in successfully');
+    } catch (err){
+      console.error('login error', err);
+      alert(err.message || 'Login failed. Please check your number and code.');
+    }
+  });
+
+  // Signup form handler
+  document.getElementById('signupForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const name = document.getElementById('signupName').value.trim();
+    const mobile = document.getElementById('signupMobile').value.trim();
+    const code = document.getElementById('signupCode').value.trim();
+    // Simplified signup: only name, mobile, 4-digit code required
+    if (!name) return alert('Please enter your full name.');
+    if (!validateMobile(mobile)) return alert('Please enter a valid mobile number.');
+    if (!validate4DigitCode(code)) return alert('Please enter a 4-digit code.');
+
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, mobile, code })
+      });
+      if (!res.ok) throw new Error('Signup failed');
+      const json = await res.json();
+      closeModal('signup');
+      alert(json.message || 'Signup successful. You can now log in.');
+    } catch (err){
+      console.error(err);
+      alert('Signup failed. Please try again.');
+    }
+  });
+
+  // sendCode helper: which = 'login' | 'signup'
+  async function sendCode(which){
+    const mobileEl = document.getElementById(which === 'login' ? 'loginMobile' : 'signupMobile');
+    const msgEl = document.getElementById(which === 'login' ? 'loginSendCodeMsg' : 'signupSendCodeMsg');
+    const btn = document.getElementById(which === 'login' ? 'loginSendCodeBtn' : 'signupSendCodeBtn');
+    let mobile = mobileEl.value.trim();
+    if (!validateMobile(mobile)) { alert('Please enter a valid mobile number before requesting a code.'); return; }
+    mobile = normalizeMobile(mobile);
+
+    try {
+      btn.disabled = true; btn.textContent = 'Sending...';
+      msgEl.textContent = '';
+      const res = await fetch('/api/send_code', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ mobile, purpose: which })
+      });
+      if (!res.ok) {
+        let errMsg = `Send code failed (status ${res.status})`;
+        try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); } catch(e){ try { const t = await res.text(); if (t) errMsg = t; } catch(e){} }
+        throw new Error(errMsg);
+      }
+      const json = await res.json();
+      msgEl.textContent = json.message || 'Code sent. It may take a moment to arrive.';
+
+      // start 60s cooldown
+      let remaining = 60;
+      btn.disabled = true;
+      const origText = 'Send code';
+      btn.textContent = `${origText} (${remaining}s)`;
+      const iv = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0){ clearInterval(iv); btn.disabled = false; btn.textContent = origText; }
+        else btn.textContent = `${origText} (${remaining}s)`;
+      }, 1000);
+    } catch (err){
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Send code';
+      msgEl.textContent = err.message || 'Failed to send code. Try again later.';
+    }
+  }
+
+  // Wire up send code buttons
+  document.getElementById('loginSendCodeBtn').addEventListener('click', () => sendCode('login'));
+  document.getElementById('signupSendCodeBtn').addEventListener('click', () => sendCode('signup'));
+
+  // Profile modal helpers
+  function openProfileModal(prefill){
+    const m = document.getElementById('profileModal');
+    if (!m) return;
+    // prefill fields
+    if (prefill){
+      if (prefill.name) document.getElementById('profileName').value = prefill.name;
+      if (prefill.mobile) document.getElementById('profileMobile').value = prefill.mobile;
+      if (prefill.licence) document.getElementById('profileLicence').value = prefill.licence;
+      if (prefill.address) document.getElementById('profileAddress').value = prefill.address;
+    }
+    m.style.display = 'block';
+  }
+  function closeProfileModal(){
+    const m = document.getElementById('profileModal'); if (m) m.style.display = 'none';
+  }
+
+  // Profile form submit: send multipart/form-data so photo can be uploaded
+  document.getElementById('profileForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const name = document.getElementById('profileName').value.trim();
+    const mobile = document.getElementById('profileMobile').value.trim();
+    const licence = document.getElementById('profileLicence').value.trim();
+    const address = document.getElementById('profileAddress').value.trim();
+    const photo = document.getElementById('profilePhoto').files[0];
+
+    if (!name) return alert('Please enter your name.');
+    if (!validateMobile(mobile)) return alert('Invalid mobile number.');
+
+    try {
+      const fd = new FormData();
+      fd.append('name', name);
+      fd.append('mobile', mobile);
+      if (licence) fd.append('licence', licence);
+      fd.append('address', address);
+      if (photo) fd.append('photo', photo);
+
+      const res = await fetch('/api/profile', {
+        method: 'POST', body: fd
+      });
+      if (!res.ok) throw new Error('Profile save failed');
+      const json = await res.json();
+      closeProfileModal();
+      alert(json.message || 'Profile saved.');
+    } catch (err){
+      console.error(err);
+      alert('Failed to save profile.');
+    }
+  });
+
+  // Update signup handler to open profile modal after successful signup
+  // We'll keep the original fetch but modify success path
+  (function patchSignupHandler(){
+    const orig = document.getElementById('signupForm').onsubmit;
+    // Re-attach by replacing previous listener: remove existing and add new
+  })();
+
+  // Replace the signup form listener to open profile modal on success
+  document.getElementById('signupForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const name = document.getElementById('signupName').value.trim();
+    let mobile = document.getElementById('signupMobile').value.trim();
+    const code = document.getElementById('signupCode').value.trim();
+    // Simplified signup handler (opens profile modal afterwards). Licence not required here.
+    mobile = normalizeMobile(mobile);
+
+    // primary attempt: JSON POST to /api/signup
+    try {
+      let res = await fetch('/api/signup', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, mobile, code })
+      });
+
+      // If server returns 405 Method Not Allowed, try a fallback (FormData to /signup)
+      if (res.status === 405) {
+        console.warn('/api/signup returned 405 — retrying as form POST to /signup');
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('mobile', mobile);
+  fd.append('code', code);
+        // try posting to '/signup' (non-API route) which some Flask apps expect
+        res = await fetch('/signup', { method: 'POST', body: fd });
+      }
+
+      if (!res.ok) {
+        let errMsg = `Signup failed (status ${res.status})`;
+        try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); } catch(e){ try { const t = await res.text(); if (t) errMsg = t; } catch(e){} }
+        throw new Error(errMsg);
+      }
+
+      const json = await res.json().catch(() => ({}));
+      // Instead of closing immediately, open profile modal to let user complete profile
+      openProfileModal({ name, mobile, licence });
+    } catch (err){
+      console.error('signup error', err);
+      alert(err.message || 'Signup failed. Please try again.');
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+
+<style>
+body{
+font-family: Arial;
+padding:40px;
+background:#f4f4f4;
+}
+
+.card{
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-top:0;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Waste Management Admin Dashboard</h1>
+
+<div class="card">
+<h2>Total Users</h2>
+<p id="users">Loading...</p>
+</div>
+
+<div class="card">
+<h2>Total Waste Reports</h2>
+<p id="reports">Loading...</p>
+</div>
+
+<div class="card">
+<h2>Waste Report List</h2>
+<ul id="reportList"></ul>
+</div>
+
+<script>
+
+async function loadDashboard(){
+
+const res = await fetch('/api/admin/dashboard');
+const data = await res.json();
+
+document.getElementById("users").innerText = data.total_users;
+document.getElementById("reports").innerText = data.total_reports;
+
+const list = document.getElementById("reportList");
+list.innerHTML="";
+
+data.reports.forEach(r =>{
+
+const li = document.createElement("li");
+
+li.innerText = r.type + " waste at " + r.location + " (" + r.weight + "kg)";
+
+list.appendChild(li);
+
+});
+
+}
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>

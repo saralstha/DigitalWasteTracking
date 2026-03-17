@@ -1,0 +1,53 @@
+async function loadReports() {
+
+  try {
+
+    const response = await fetch('/api/reports');
+
+    if (!response.ok) {
+      console.error("Failed to fetch reports");
+      return;
+    }
+
+    const reports = await response.json();
+
+    if (!reports || reports.length === 0) {
+      console.log("No reports found");
+      return;
+    }
+
+    reports.forEach(report => {
+
+      // skip if coordinates missing
+      if (!report.lat || !report.lon) {
+        console.warn("Report missing coordinates:", report);
+        return;
+      }
+
+      const lat = parseFloat(report.lat);
+      const lon = parseFloat(report.lon);
+
+      const marker = L.marker([lat, lon]).addTo(map);
+
+      // photo path
+      let photoHTML = "";
+      if (report.photo) {
+        photoHTML = `<br><img src="static/uploads/${report.photo}" width="120" style="margin-top:5px;border-radius:5px;">`;
+      }
+
+      marker.bindPopup(`
+        <b>${report.type} Waste</b><br>
+        Weight: ${report.weight} kg<br>
+        Location: ${report.location}
+        ${photoHTML}
+      `);
+
+    });
+
+  } catch (error) {
+
+    console.error("Error loading reports:", error);
+
+  }
+
+}
