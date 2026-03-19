@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EWaste - Smart E-Waste Management</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 
 <body>
@@ -259,7 +259,7 @@ async function submitReport() {
     <b>${type} Waste</b><br>
     ${weight} kg<br>
     ${loc}<br>
-    <img src="static/uploads/${file.name}" width="120">
+    <img src="/static/uploads/${file.name}" width="120">
   `);
 
   document.getElementById('reportForm').reset();
