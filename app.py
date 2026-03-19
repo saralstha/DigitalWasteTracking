@@ -6,8 +6,7 @@ from werkzeug.utils import secure_filename
 
 # Serve static files and templates from the `Frontend` folder so your existing
 # HTML, CSS and JS work without changing their paths.
-app = Flask(__name__, static_folder='Frontend', static_url_path='', template_folder='Frontend')
-CORS(app)
+app = Flask(__name__)
 
 # ----------------------------
 # STORAGE (replace with database later)
