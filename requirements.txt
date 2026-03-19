@@ -1,1 +1,4 @@
-MONGODB_URL: mongodb://localhost:27017
+Flask
+flask-cors
+gunicorn
+werkzeug
