@@ -331,25 +331,16 @@ def profile():
 # ----------------------------
 @app.route('/api/report', methods=['POST'])
 def report_waste():
-    # Accept both JSON and form-encoded submissions
-    data = request.get_json(silent=True)
-    if data:
-        location = data.get('location')
-        waste_type = data.get('type')
-        weight = data.get('weight')
-        lat = data.get('lat')
-        lon = data.get('lon')
-    else:
-        location = request.form.get("location")
-        waste_type = request.form.get("type")
-        weight = request.form.get("weight")
-        lat = request.form.get("lat")
-        lon = request.form.get("lon")
+
+    location = request.form.get("location")
+    waste_type = request.form.get("type")
+    weight = request.form.get("weight")
+    lat = request.form.get("lat")
+    lon = request.form.get("lon")
 
     if not location or not waste_type or not weight:
-        return jsonify({"message": "Missing fields: location, type and weight are required"}), 400
+        return jsonify({"message": "Missing fields"}), 400
 
-    # handle photo if provided (only possible via multipart/form-data)
     photo = request.files.get("photo")
     filename = ""
 
@@ -358,25 +349,23 @@ def report_waste():
         path = os.path.join(UPLOAD_FOLDER, filename)
         photo.save(path)
 
-    # Normalize lat/lon to strings (keep empty if not provided)
-    lat = '' if lat is None else str(lat)
-    lon = '' if lon is None else str(lon)
+    report = {
+        "location": location,
+        "type": waste_type,
+        "weight": weight,
+        "lat": lat,
+        "lon": lon,
+        "photo": filename
+    }
 
-    report = Report(
-        location=location,
-        type=waste_type,
-        weight=weight,
-        lat=lat,
-        lon=lon,
-        photo=filename,
-        timestamp=(datetime.utcnow().isoformat() + 'Z')
-    )
-    db.session.add(report)
-    db.session.commit()
+    reports.append(report)
 
-    app.logger.info('New Waste Report: %s', report.to_dict())
-    return jsonify({"message": "Waste report saved", "report": report.to_dict()}), 200
+    print("New Waste Report:", report)
 
+    return jsonify({
+        "message": "Waste report saved",
+        "report": report   # ✅ VERY IMPORTANT
+    }), 200
 
 
 
@@ -488,3 +477,7 @@ def load_user(user_id):
         return User.query.get(int(user_id))
     except Exception:
         return None
+        @app.route('/reports')
+def reports_page():
+    return render_template('loadreports.html')
+
