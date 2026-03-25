@@ -1,36 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>All Reports</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reported Waste</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  <div class="container" style="padding:40px 20px;">
+    <h1>Reported Waste</h1>
+    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
+    <div id="reportsContainer"></div>
+  </div>
 
-<h2>All Waste Reports</h2>
-<div id="list"></div>
+  <script>
+    async function loadAllReports() {
+      const res = await fetch('/api/reports');
+      const reports = await res.json();
+      const container = document.getElementById('reportsContainer');
 
-<script>
-async function load(){
-  const res = await fetch('/api/reports');
-  const data = await res.json();
+      if (!reports.length) {
+        container.innerHTML = '<p>No reports yet.</p>';
+        return;
+      }
 
-  let html = '';
+      container.innerHTML = reports.map(r => `
+        <div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:16px;margin-bottom:16px;">
+          <h3>${r.type || 'Unknown'} Waste</h3>
+          <p><strong>Location:</strong> ${r.location || ''}</p>
+          <p><strong>Weight:</strong> ${r.weight || ''} kg</p>
+          ${r.photo ? `<img src="/uploads/${encodeURIComponent(r.photo)}" width="180" style="border-radius:8px;">` : ''}
+        </div>
+      `).join('');
+    }
 
-  data.forEach(r => {
-    html += `
-      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <b>${r.type}</b><br>
-        Location: ${r.location}<br>
-        Weight: ${r.weight} kg<br>
-        ${r.photo ? `<img src="/static/uploads/${r.photo}" width="150">` : ''}
-      </div>
-    `;
-  });
-
-  document.getElementById('list').innerHTML = html;
-}
-
-load();
-</script>
-
+    loadAllReports();
+  </script>
 </body>
 </html>
