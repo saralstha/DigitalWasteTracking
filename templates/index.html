@@ -7,11 +7,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 
 <body>
-  <!-- Navigation -->
   <nav class="navbar">
     <div class="nav-container">
       <div class="nav-logo">
@@ -20,38 +19,39 @@
       <ul class="nav-menu">
         <li><a href="{{ url_for('home') }}">Home</a></li>
         <li><a href="{{ url_for('home') }}#services">Services</a></li>
-        <li><a href="{{ url_for('report') }}">Report</a></li>
-        <li><a href="{{ url_for('track') }}">Track</a></li>
-        <li><a href="{{ url_for('about') }}">About</a></li>
-       <li><a href="{{ url_for('reports_page') }}">Reports</a></li>
+        <li><a href="{{ url_for('home') }}#report">Report</a></li>
+        <li><a href="{{ url_for('home') }}#track">Track</a></li>
+        <li><a href="{{ url_for('home') }}#about">About</a></li>
+        <li><a href="{{ url_for('reports_page') }}">Reports</a></li>
 
-
-         {% if current_user %}
-  <li><a href="#" onclick="openProfileModal({ name: '{{ current_user.name|e }}', mobile: '{{ current_user.mobile|e }}', licence: '{{ current_user.licence|e }}', address: '{{ current_user.address|e }}' })">Profile</a></li>
-  {% if current_user.is_admin %}
-    <li><a href="{{ url_for('admin_page') }}">Admin</a></li>
-  {% endif %}
-  <li><button class="btn" onclick="logout()">Logout</button></li>
-{% else %}
-  <li><button class="btn btn-primary" onclick="openAuthChoice()">Account</button></li>
-  <li><a href="#" onclick="openAdminLogin()">Admin</a></li>
-{% endif %}
-
+        {% if current_user %}
+          <li>
+            <a href="#"
+               onclick="openProfileModal({ name: '{{ current_user.name|e }}', mobile: '{{ current_user.mobile|e }}', licence: '{{ current_user.licence|e }}', address: '{{ current_user.address|e }}' })">
+              Profile
+            </a>
+          </li>
+          {% if current_user.is_admin %}
+            <li><a href="{{ url_for('admin_page') }}">Admin</a></li>
+          {% endif %}
+          <li><button class="btn" onclick="logout()">Logout</button></li>
+        {% else %}
+          <li><button class="btn btn-primary" onclick="openAuthChoice()">Account</button></li>
+          <li><a href="#" onclick="openAdminLogin()">Admin</a></li>
+        {% endif %}
       </ul>
     </div>
   </nav>
 
-  <!-- Hero Section -->
   <section id="home" class="hero">
     <div class="container">
       <h1>Digital Waste Tracking System</h1>
       <p>Monitor, manage, and recycle e-waste responsibly for a greener future.</p>
-      <a class="btn btn-primary" href="{{ url_for('report') }}">Report Waste</a>
-      <a class="btn btn-secondary" href="{{ url_for('track') }}">View Map</a>
+      <a class="btn btn-primary" href="#report">Report Waste</a>
+      <a class="btn btn-secondary" href="#track">View Map</a>
     </div>
   </section>
 
-  <!-- Services -->
   <section id="services" class="services">
     <div class="container">
       <h2>Our Services</h2>
@@ -75,121 +75,196 @@
     </div>
   </section>
 
-  <!-- Waste Reporting Section -->
-  <!-- Report Waste Section -->
-<section id="report" class="report-section" style="padding:70px 0; background-color:#e8f5e9;">
-  <div class="container" style="max-width:850px; margin:auto;">
-    <h2 style="font-size:2.2rem; text-align:center; color:#145a32; margin-bottom:15px;">Report Waste</h2>
-    <p style="text-align:center; font-size:1.1rem; color:#333; margin-bottom:40px;">
-      Help us keep Sydney clean! Use this form to report uncollected or illegal waste.  
-      Upload a clear photo and include as much detail as possible.
-    </p>
-
-    <form id="reportForm" enctype="multipart/form-data" 
-          style="background:#fff; padding:35px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:20px;">
-        <div>
-          <label for="location" style="font-weight:600;">Location (Suburb or Address)</label>
-          <input type="text" id="location" name="location" placeholder="e.g., Parramatta" required
-                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
-        </div>
-        <div>
-          <label for="type" style="font-weight:600;">Waste Type</label>
-          <select id="type" name="type" required
-                  style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
-            <option value="">Select Type</option>
-            <option>Plastic</option>
-            <option>Metal</option>
-            <option>Electronic</option>
-            <option>Organic</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px;">
-        <div>
-          <label for="weight" style="font-weight:600;">Approximate Weight (kg)</label>
-          <input type="number" id="weight" name="weight" placeholder="e.g., 5" required
-                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
-        </div>
-        <div>
-          <label for="photo" style="font-weight:600;">Upload Waste Photo</label>
-          <input type="file" id="photo" name="photo" accept="image/*" required
-                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
-        </div>
-      </div>
-
-      <div style="text-align:center; margin-top:30px;">
-        <button type="button" class="btn btn-primary" 
-                onclick="submitReport()" 
-                style="background:#2e7d32; color:#fff; border:none; padding:12px 28px; border-radius:10px; font-size:1rem;">
-          Submit Report
-        </button>
-      </div>
-    </form>
-
-    <div id="reportLog" style="margin-top:40px; background:#fff; border-radius:10px; padding:25px; box-shadow:0 3px 8px rgba(0,0,0,0.08);">
-      <strong style="color:#145a32; font-size:1.2rem;">Recent Reports:</strong>
-      <div id="reportList" style="margin-top:10px; color:#555; line-height:1.6;">
-        <em>No reports yet.</em>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-  <!-- Tracking Map Section -->
-  <section id="track" class="track-section" style="background-color:#f4f8f7; padding:60px 0;">
-  <div class="container" style="max-width:1000px; margin:auto; text-align:center;">
-    <h2 style="font-size:2.2rem; color:#145a32; margin-bottom:10px;">Track Reported Waste</h2>
-    <p style="font-size:1.1rem; color:#444; margin-bottom:25px;">
-      View real-time waste collection and reporting activity across Sydney.  
-      Click on any map marker to see details about the reported waste type and location.
-    </p>
-
-    <div id="map" 
-         style="height:500px; border-radius:16px; border:2px solid #ddd; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-    </div>
-
-    <p style="margin-top:20px; color:#555;">Map powered by <b>OpenStreetMap</b> and <b>Leaflet.js</b>.</p>
-  </div>
-</section>
-
-  <!-- About Section -->
-  <!-- About Us Section -->
-<section id="about" class="about-section" style="background-color:#f4f7f6; padding:70px 0;">
-  <div class="container" style="max-width:900px; margin:auto; text-align:center;">
-    <h2 style="font-size:2.3rem; color:#145a32; margin-bottom:15px;">About Our Project</h2>
-    <p style="font-size:1.1rem; color:#444; line-height:1.7; margin-bottom:35px;">
-      The <strong>Digital Waste Tracker</strong> is an innovative solution developed to simplify and 
-      modernize waste management across Sydney. By combining technology, sustainability, and data 
-      insights, our platform empowers individuals, organizations, and councils to track, manage, 
-      and report waste efficiently. We believe that smart monitoring and digital transparency 
-      can help create a cleaner, greener, and more sustainable future.
-    </p>
-
-    <div style="background:#fff; padding:30px; border-radius:12px; box-shadow:0 3px 10px rgba(0,0,0,0.1);">
-      <h3 style="color:#2e7d32;">Our Team</h3>
-      <p style="color:#555; margin-top:10px;">
-        <strong>Members:</strong> Pujan, Ganesh, Divya, Prashant, and Saral <br>
-        <strong>Supervisor:</strong> Dr. Ayesha Sohail
+  <section id="report" class="report-section" style="padding:70px 0; background-color:#e8f5e9;">
+    <div class="container" style="max-width:850px; margin:auto;">
+      <h2 style="font-size:2.2rem; text-align:center; color:#145a32; margin-bottom:15px;">Report Waste</h2>
+      <p style="text-align:center; font-size:1.1rem; color:#333; margin-bottom:40px;">
+        Help us keep Sydney clean! Use this form to report uncollected or illegal waste.
+        Upload a clear photo and include as much detail as possible.
       </p>
+
+      <form id="reportForm" enctype="multipart/form-data"
+            style="background:#fff; padding:35px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:20px;">
+          <div>
+            <label for="location" style="font-weight:600;">Location (Suburb or Address)</label>
+            <input type="text" id="location" name="location" placeholder="e.g., Parramatta" required
+                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+          </div>
+          <div>
+            <label for="type" style="font-weight:600;">Waste Type</label>
+            <select id="type" name="type" required
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+              <option value="">Select Type</option>
+              <option>Plastic</option>
+              <option>Metal</option>
+              <option>Electronic</option>
+              <option>Organic</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px;">
+          <div>
+            <label for="weight" style="font-weight:600;">Approximate Weight (kg)</label>
+            <input type="number" id="weight" name="weight" placeholder="e.g., 5" required
+                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+          </div>
+          <div>
+            <label for="photo" style="font-weight:600;">Upload Waste Photo</label>
+            <input type="file" id="photo" name="photo" accept="image/*" required
+                   style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:30px;">
+          <button type="button" class="btn btn-primary"
+                  onclick="submitReport()"
+                  style="background:#2e7d32; color:#fff; border:none; padding:12px 28px; border-radius:10px; font-size:1rem;">
+            Submit Report
+          </button>
+        </div>
+      </form>
+
+      <div id="reportLog" style="margin-top:40px; background:#fff; border-radius:10px; padding:25px; box-shadow:0 3px 8px rgba(0,0,0,0.08);">
+        <strong style="color:#145a32; font-size:1.2rem;">Recent Reports:</strong>
+        <div id="reportList" style="margin-top:10px; color:#555; line-height:1.6;">
+          <em>No reports yet.</em>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
+  <section id="track" class="track-section" style="background-color:#f4f8f7; padding:60px 0;">
+    <div class="container" style="max-width:1000px; margin:auto; text-align:center;">
+      <h2 style="font-size:2.2rem; color:#145a32; margin-bottom:10px;">Track Reported Waste</h2>
+      <p style="font-size:1.1rem; color:#444; margin-bottom:25px;">
+        View real-time waste collection and reporting activity across Sydney.
+        Click on any map marker to see details about the reported waste type and location.
+      </p>
 
-  <!-- Footer -->
+      <div id="map"
+           style="height:500px; border-radius:16px; border:2px solid #ddd; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+      </div>
+
+      <p style="margin-top:20px; color:#555;">Map powered by <b>OpenStreetMap</b> and <b>Leaflet.js</b>.</p>
+    </div>
+  </section>
+
+  <section id="about" class="about-section" style="background-color:#f4f7f6; padding:70px 0;">
+    <div class="container" style="max-width:900px; margin:auto; text-align:center;">
+      <h2 style="font-size:2.3rem; color:#145a32; margin-bottom:15px;">About Our Project</h2>
+      <p style="font-size:1.1rem; color:#444; line-height:1.7; margin-bottom:35px;">
+        The <strong>Digital Waste Tracker</strong> is an innovative solution developed to simplify and
+        modernize waste management across Sydney. By combining technology, sustainability, and data
+        insights, our platform empowers individuals, organizations, and councils to track, manage,
+        and report waste efficiently. We believe that smart monitoring and digital transparency
+        can help create a cleaner, greener, and more sustainable future.
+      </p>
+
+      <div style="background:#fff; padding:30px; border-radius:12px; box-shadow:0 3px 10px rgba(0,0,0,0.1);">
+        <h3 style="color:#2e7d32;">Our Team</h3>
+        <p style="color:#555; margin-top:10px;">
+          <strong>Members:</strong> Pujan, Ganesh, Divya, Prashant, and Saral <br>
+          <strong>Supervisor:</strong> Dr. Ayesha Sohail
+        </p>
+      </div>
+    </div>
+  </section>
+
   <footer class="footer">
     <div class="container">
       <p>&copy; 2025 EWaste | Built for a Greener Future</p>
     </div>
   </footer>
 
-  <!-- Scripts -->
+  <div id="accountModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width:520px;">
+      <span class="close" onclick="closeAccountModal()">&times;</span>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button id="tabLogin" class="btn" onclick="showAccountTab('login')">Login</button>
+        <button id="tabSignup" class="btn btn-primary" onclick="showAccountTab('signup')">Sign Up</button>
+      </div>
+
+      <div id="accountLogin" class="account-panel">
+        <h3>Login to EWaste</h3>
+        <form id="loginForm">
+          <label>Mobile number (10 digits)</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="tel" id="loginMobile" name="mobile" placeholder="04XXXXXXXX" required style="flex:1;">
+          </div>
+          <label style="margin-top:8px; display:block;">Passcode</label>
+          <input type="password" id="loginPasscode" name="passcode" placeholder="Your passcode" required>
+          <div style="margin-top:12px; text-align:right;">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
+        </form>
+        <p style="margin-top:12px;">New user? <a href="#" onclick="showAccountTab('signup')">Sign up here</a></p>
+      </div>
+
+      <div id="accountSignup" class="account-panel" style="display:none;">
+        <h3>Create an Account</h3>
+        <form id="signupForm">
+          <label>Full Name</label>
+          <input type="text" id="signupName" name="name" required>
+          <label>Mobile number (10 digits)</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="tel" id="signupMobile" name="mobile" placeholder="04XXXXXXXX" required style="flex:1;">
+          </div>
+          <label style="margin-top:8px; display:block;">Passcode (4 digits)</label>
+          <input type="password" id="signupPasscode" name="passcode" placeholder="1234" maxlength="4" pattern="\d{4}" required>
+          <div style="margin-top:12px; text-align:right;">
+            <button type="submit" class="btn btn-primary">Sign Up</button>
+          </div>
+        </form>
+        <p style="margin-top:12px;">Already have an account? <a href="#" onclick="showAccountTab('login')">Login here</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="authChoiceModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeAuthChoice()">&times;</span>
+      <h2>Account</h2>
+      <p style="margin-top:6px; margin-bottom:12px;">Already have an account? Or create a new one.</p>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px;">
+        <button class="btn" onclick="(function(){ closeAuthChoice(); openModal('login'); })()">Login</button>
+        <button class="btn btn-primary" onclick="(function(){ closeAuthChoice(); openModal('signup'); })()">Sign Up</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeProfileModal()">&times;</span>
+      <h2>Your Profile</h2>
+      <form id="profileForm">
+        <label>Full Name</label>
+        <input type="text" id="profileName" name="name" required>
+
+        <label>Mobile number</label>
+        <input type="text" id="profileMobile" name="mobile" readonly>
+
+        <label>NSW Licence Number (optional)</label>
+        <input type="text" id="profileLicence" name="licence">
+
+        <label>Address (optional)</label>
+        <input type="text" id="profileAddress" name="address" placeholder="Suburb or address">
+
+        <label>Profile photo (optional)</label>
+        <input type="file" id="profilePhoto" name="photo" accept="image/*">
+
+        <div style="margin-top:12px; text-align:right;">
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </div>
+      </form>
+      <p style="margin-top:12px; color:#555;">You can edit your profile later from your account page.</p>
+    </div>
+  </div>
+
   <script>
-    // Initialize map (centered on Sydney)
     const map = L.map('map').setView([-33.8688, 151.2093], 11);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
@@ -199,379 +274,366 @@
       const data = await res.json();
       return data.length ? [data[0].lat, data[0].lon] : null;
     }
-    async function loadReports(){
-      try{
+
+    function renderReportsListFromData(data) {
+      const reportList = document.getElementById('reportList');
+      if (!reportList) return;
+
+      if (!data.length) {
+        reportList.innerHTML = '<em>No reports yet.</em>';
+        return;
+      }
+
+      reportList.innerHTML = data.map(r => {
+        return `<p>${r.type || 'Unknown'} waste (${r.weight || ''}kg) at ${r.location || ''}</p>`;
+      }).join('');
+    }
+
+    async function loadReports() {
+      try {
         const res = await fetch('/api/reports');
         const data = await res.json();
 
-        for (const r of data){
+        renderReportsListFromData(data);
+
+        for (const r of data) {
           let lat = parseFloat(r.lat);
           let lon = parseFloat(r.lon);
-          if (!isFinite(lat) || !isFinite(lon)){
-            // try geocoding if lat/lon not provided
+
+          if (!isFinite(lat) || !isFinite(lon)) {
             const coords = await getCoordinates(r.location);
             if (!coords) continue;
-            lat = parseFloat(coords[0]); lon = parseFloat(coords[1]);
+            lat = parseFloat(coords[0]);
+            lon = parseFloat(coords[1]);
           }
 
           const marker = L.marker([lat, lon]).addTo(map);
+
           let popup = `<b>${r.type || 'Unknown'} Waste</b><br>`;
           if (r.weight) popup += `${r.weight} kg<br>`;
           if (r.location) popup += `${r.location}<br>`;
-          if (r.photo){
-            const imageUrl = window.getReportImageUrl ? window.getReportImageUrl(r.photo) : ('/static/uploads/' + encodeURIComponent(r.photo));
+          if (r.photo) {
+            const imageUrl = '/uploads/' + encodeURIComponent(r.photo);
             popup += `<img src="${imageUrl}" width="140" style="margin-top:6px;border-radius:6px;">`;
           }
+
           marker.bindPopup(popup);
         }
-
-        // update the recent reports list (if present)
-        if (window.renderReportsList) window.renderReportsList('reportList');
-      } catch(e){ console.error('loadReports error', e); }
+      } catch (e) {
+        console.error('loadReports error', e);
+      }
     }
 
     loadReports();
 
-
-    async function submitReport(){
+    async function submitReport() {
       const loc = document.getElementById('location').value;
       const type = document.getElementById('type').value;
       const weight = document.getElementById('weight').value;
       const file = document.getElementById('photo').files[0];
 
       const coords = await getCoordinates(loc);
-      if (!coords){ alert('Could not resolve location'); return; }
+      if (!coords) {
+        alert('Could not resolve location');
+        return;
+      }
 
       const [lat, lon] = coords;
       const fd = new FormData();
-      fd.append('location', loc); fd.append('type', type); fd.append('weight', weight);
+      fd.append('location', loc);
+      fd.append('type', type);
+      fd.append('weight', weight);
       if (file) fd.append('photo', file);
-      fd.append('lat', lat); fd.append('lon', lon);
+      fd.append('lat', lat);
+      fd.append('lon', lon);
 
-      const res = await fetch('/api/report', { method:'POST', body: fd });
+      const res = await fetch('/api/report', { method: 'POST', body: fd });
       const j = await res.json();
-      if (!res.ok) return alert('Error: ' + (j.message || res.status));
 
-      // add marker using the saved report data from server (ensures correct photo filename)
+      if (!res.ok) {
+        alert('Error: ' + (j.message || res.status));
+        return;
+      }
+
       const saved = j.report || { location: loc, type, weight, lat, lon, photo: (file && file.name) };
+
       const marker = L.marker([parseFloat(saved.lat), parseFloat(saved.lon)]).addTo(map);
       let popup = `<b>${saved.type || 'Unknown'} Waste</b><br>`;
       if (saved.weight) popup += `${saved.weight} kg<br>`;
       if (saved.location) popup += `${saved.location}<br>`;
-      if (saved.photo){
-        const imageUrl = window.getReportImageUrl ? window.getReportImageUrl(saved.photo) : ('/static/uploads/' + encodeURIComponent(saved.photo));
+      if (saved.photo) {
+        const imageUrl = '/uploads/' + encodeURIComponent(saved.photo);
         popup += `<img src="${imageUrl}" width="140" style="margin-top:6px;border-radius:6px;">`;
       }
       marker.bindPopup(popup).openPopup();
 
-      // refresh recent list
-      if (window.renderReportsList) window.renderReportsList('reportList');
+      const currentReportsRes = await fetch('/api/reports');
+      const currentReports = await currentReportsRes.json();
+      renderReportsListFromData(currentReports);
 
       document.getElementById('reportForm').reset();
+      alert(j.message || 'Waste report saved');
     }
 
-  </script>
-  
-</div>
-<!-- Account Modal (combined Login & Sign Up) -->
-<div id="accountModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width:520px;">
-    <span class="close" onclick="closeAccountModal()">&times;</span>
-    <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <button id="tabLogin" class="btn" onclick="showAccountTab('login')">Login</button>
-      <button id="tabSignup" class="btn btn-primary" onclick="showAccountTab('signup')">Sign Up</button>
-    </div>
-
-    <div id="accountLogin" class="account-panel">
-      <h3>Login to EWaste</h3>
-      <form id="loginForm">
-        <label>Mobile number (10 digits)</label>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input type="tel" id="loginMobile" name="mobile" placeholder="04XXXXXXXX" required style="flex:1;">
-        </div>
-        <label style="margin-top:8px; display:block;">Passcode</label>
-        <input type="password" id="loginPasscode" name="passcode" placeholder="Your passcode" required>
-        <div style="margin-top:12px; text-align:right;">
-          <button type="submit" class="btn btn-primary">Login</button>
-        </div>
-      </form>
-      <p style="margin-top:12px;">New user? <a href="#" onclick="showAccountTab('signup')">Sign up here</a></p>
-    </div>
-
-    <div id="accountSignup" class="account-panel" style="display:none;">
-      <h3>Create an Account</h3>
-      <form id="signupForm">
-        <label>Full Name</label>
-        <input type="text" id="signupName" name="name" required>
-        <label>Mobile number (10 digits)</label>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input type="tel" id="signupMobile" name="mobile" placeholder="04XXXXXXXX" required style="flex:1;">
-        </div>
-        <label style="margin-top:8px; display:block;">Passcode (4 digits)</label>
-        <input type="password" id="signupPasscode" name="passcode" placeholder="1234" maxlength="4" pattern="\d{4}" required>
-        <div style="margin-top:12px; text-align:right;">
-          <button type="submit" class="btn btn-primary">Sign Up</button>
-        </div>
-      </form>
-      <p style="margin-top:12px;">Already have an account? <a href="#" onclick="showAccountTab('login')">Login here</a></p>
-    </div>
-  </div>
-</div>
-
-<!-- Auth Choice Modal (combined entry point) -->
-<div id="authChoiceModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" onclick="closeAuthChoice()">&times;</span>
-    <h2>Account</h2>
-    <p style="margin-top:6px; margin-bottom:12px;">Already have an account? Or create a new one.</p>
-    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px;">
-      <button class="btn" onclick="(function(){ closeAuthChoice(); openModal('login'); })()">Login</button>
-      <button class="btn btn-primary" onclick="(function(){ closeAuthChoice(); openModal('signup'); })()">Sign Up</button>
-    </div>
-  </div>
-</div>
-
-<!-- Profile Modal (shown after signup or for editing profile) -->
-<div id="profileModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" onclick="closeProfileModal()">&times;</span>
-    <h2>Your Profile</h2>
-    <form id="profileForm">
-      <label>Full Name</label>
-      <input type="text" id="profileName" name="name" required>
-
-  <label>Mobile number</label>
-  <input type="text" id="profileMobile" name="mobile" readonly>
-
-  <label>NSW Licence Number (optional)</label>
-  <input type="text" id="profileLicence" name="licence">
-
-      <label>Address (optional)</label>
-      <input type="text" id="profileAddress" name="address" placeholder="Suburb or address">
-
-      <label>Profile photo (optional)</label>
-      <input type="file" id="profilePhoto" name="photo" accept="image/*">
-
-      <div style="margin-top:12px; text-align:right;">
-        <button type="submit" class="btn btn-primary">Save Profile</button>
-      </div>
-    </form>
-    <p style="margin-top:12px; color:#555;">You can edit your profile later from your account page.</p>
-  </div>
-</div>
-
-<script>
-  // Simple modal helpers in case other scripts are not loaded
-  function openModal(which){ openAccountModal(which); }
-  function closeModal(which){ if (which === 'login' || which === 'signup') closeAccountModal(); }
-
-  function openAccountModal(which){
-    const m = document.getElementById('accountModal'); if (!m) return;
-    m.style.display = 'block';
-    showAccountTab(which || 'login');
-  }
-  function closeAccountModal(){ const m = document.getElementById('accountModal'); if (m) m.style.display = 'none'; }
-
-  function showAccountTab(tab){
-    const loginPanel = document.getElementById('accountLogin');
-    const signupPanel = document.getElementById('accountSignup');
-    const tabLogin = document.getElementById('tabLogin');
-    const tabSignup = document.getElementById('tabSignup');
-    if (!loginPanel || !signupPanel) return;
-    if (tab === 'signup'){
-      loginPanel.style.display = 'none'; signupPanel.style.display = 'block';
-      if (tabLogin) tabLogin.classList.remove('btn-primary'); if (tabSignup) tabSignup.classList.add('btn-primary');
-    } else {
-      loginPanel.style.display = 'block'; signupPanel.style.display = 'none';
-      if (tabLogin) tabLogin.classList.add('btn-primary'); if (tabSignup) tabSignup.classList.remove('btn-primary');
+    function openModal(which) {
+      openAccountModal(which);
     }
-  }
 
-  function switchModal(){
-    // Toggle between login and signup inside the combined modal
-    const loginPanel = document.getElementById('accountLogin');
-    if (!loginPanel) return;
-    if (loginPanel.style.display === 'block') showAccountTab('signup'); else showAccountTab('login');
-  }
+    function closeModal(which) {
+      if (which === 'login' || which === 'signup') closeAccountModal();
+    }
 
-  // Basic validators
-  function validateMobile(m){
-    if (!m) return false;
-    const digits = m.replace(/\D/g, '');
-    return digits.length === 10; // require 10 digits for AU mobile
-  }
-  function validatePasscode(p){ return /^\d{4}$/.test(p); }
-  function validateLicence(l){
-    if (!l) return false;
-    // NSW licence numbers vary; accept 5-12 alphanumeric chars as a reasonable constraint
-    return /^[A-Z0-9]{5,12}$/i.test(l.replace(/\s+/g,''));
-  }
-  function normalizeMobile(m){
-    if (!m) return '';
-    return m.replace(/\D/g, '');
-  }
+    function openAccountModal(which) {
+      const m = document.getElementById('accountModal');
+      if (!m) return;
+      m.style.display = 'block';
+      showAccountTab(which || 'login');
+    }
 
-  // Open the login modal in "admin" mode (the login handler will redirect admins to /admin)
-  function openAdminLogin(){
-    window.wantAdminLogin = true;
-    openModal('login');
-  }
+    function closeAccountModal() {
+      const m = document.getElementById('accountModal');
+      if (m) m.style.display = 'none';
+    }
 
-  // Account choice modal helpers
-  function openAuthChoice(){
-    const m = document.getElementById('authChoiceModal'); if (m) m.style.display = 'block';
-  }
-  function closeAuthChoice(){
-    const m = document.getElementById('authChoiceModal'); if (m) m.style.display = 'none';
-  }
+    function showAccountTab(tab) {
+      const loginPanel = document.getElementById('accountLogin');
+      const signupPanel = document.getElementById('accountSignup');
+      const tabLogin = document.getElementById('tabLogin');
+      const tabSignup = document.getElementById('tabSignup');
 
-  // Login form handler
-  document.getElementById('loginForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    let mobile = document.getElementById('loginMobile').value.trim();
-    const passcode = document.getElementById('loginPasscode').value.trim();
-    if (!validateMobile(mobile)) return alert('Please enter a valid 10-digit mobile number.');
-    if (!validatePasscode(passcode)) return alert('Please enter a 4-digit passcode.');
+      if (!loginPanel || !signupPanel) return;
 
-    mobile = normalizeMobile(mobile);
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ mobile, passcode })
-      });
-      const json = await res.json().catch(()=> ({}));
-      if (!res.ok) {
-        throw new Error((json && json.message) ? json.message : `Login failed (status ${res.status})`);
+      if (tab === 'signup') {
+        loginPanel.style.display = 'none';
+        signupPanel.style.display = 'block';
+        if (tabLogin) tabLogin.classList.remove('btn-primary');
+        if (tabSignup) tabSignup.classList.add('btn-primary');
+      } else {
+        loginPanel.style.display = 'block';
+        signupPanel.style.display = 'none';
+        if (tabLogin) tabLogin.classList.add('btn-primary');
+        if (tabSignup) tabSignup.classList.remove('btn-primary');
       }
-      closeModal('login');
-      // If admin login was requested, redirect admins to /admin, otherwise show success
-      if (window.wantAdminLogin) {
-        window.wantAdminLogin = false;
+    }
+
+    function switchModal() {
+      const loginPanel = document.getElementById('accountLogin');
+      if (!loginPanel) return;
+      if (loginPanel.style.display === 'block') showAccountTab('signup');
+      else showAccountTab('login');
+    }
+
+    function validateMobile(m) {
+      if (!m) return false;
+      const digits = m.replace(/\D/g, '');
+      return digits.length === 10;
+    }
+
+    function validatePasscode(p) {
+      return /^\d{4}$/.test(p);
+    }
+
+    function normalizeMobile(m) {
+      if (!m) return '';
+      return m.replace(/\D/g, '');
+    }
+
+    function openAdminLogin() {
+      window.wantAdminLogin = true;
+      openModal('login');
+    }
+
+    function openAuthChoice() {
+      const m = document.getElementById('authChoiceModal');
+      if (m) m.style.display = 'block';
+    }
+
+    function closeAuthChoice() {
+      const m = document.getElementById('authChoiceModal');
+      if (m) m.style.display = 'none';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      let mobile = document.getElementById('loginMobile').value.trim();
+      const passcode = document.getElementById('loginPasscode').value.trim();
+
+      if (!validateMobile(mobile)) {
+        alert('Please enter a valid 10-digit mobile number.');
+        return;
+      }
+
+      if (!validatePasscode(passcode)) {
+        alert('Please enter a 4-digit passcode.');
+        return;
+      }
+
+      mobile = normalizeMobile(mobile);
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mobile, passcode })
+        });
+
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error((json && json.message) ? json.message : `Login failed (status ${res.status})`);
+        }
+
+        closeModal('login');
+
+        if (window.wantAdminLogin) {
+          window.wantAdminLogin = false;
+          if (json.user && json.user.is_admin) {
+            window.location.href = '/admin';
+            return;
+          } else {
+            alert('This account is not an admin.');
+            return;
+          }
+        }
+
+        alert(json.message || 'Logged in successfully');
+        window.location.reload();
+      } catch (err) {
+        console.error('login error', err);
+        alert(err.message || 'Login failed. Please check your number and passcode.');
+      }
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('signupName').value.trim();
+      let mobile = document.getElementById('signupMobile').value.trim();
+      const passcode = document.getElementById('signupPasscode').value.trim();
+
+      if (!name) {
+        alert('Please enter your full name.');
+        return;
+      }
+
+      if (!validateMobile(mobile)) {
+        alert('Please enter a valid 10-digit mobile.');
+        return;
+      }
+
+      if (!validatePasscode(passcode)) {
+        alert('Please enter a 4-digit passcode.');
+        return;
+      }
+
+      mobile = normalizeMobile(mobile);
+
+      try {
+        const res = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, mobile, passcode })
+        });
+
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error((json && json.message) ? json.message : 'Signup failed');
+        }
+
+        closeModal('signup');
+        alert(json.message || 'Signup successful');
+
         if (json.user && json.user.is_admin) {
           window.location.href = '/admin';
           return;
-        } else {
-          alert('This account is not an admin.');
-          return;
         }
+
+        openProfileModal({
+          name: json.user?.name || name,
+          mobile: json.user?.mobile || mobile
+        });
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Signup failed. Please try again.');
       }
-      alert(json.message || 'Logged in successfully');
-      // refresh to update UI / show profile link
-      window.location.reload();
-    } catch (err){
-      console.error('login error', err);
-      alert(err.message || 'Login failed. Please check your number and code.');
+    });
+
+    function openProfileModal(prefill) {
+      const m = document.getElementById('profileModal');
+      if (!m) return;
+
+      if (prefill) {
+        if (prefill.name) document.getElementById('profileName').value = prefill.name;
+        if (prefill.mobile) document.getElementById('profileMobile').value = prefill.mobile;
+        if (prefill.licence) document.getElementById('profileLicence').value = prefill.licence;
+        if (prefill.address) document.getElementById('profileAddress').value = prefill.address;
+      }
+
+      m.style.display = 'block';
     }
-  });
 
-  // Signup form handler
-  document.getElementById('signupForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const name = document.getElementById('signupName').value.trim();
-    let mobile = document.getElementById('signupMobile').value.trim();
-    const passcode = document.getElementById('signupPasscode').value.trim();
-    // Simplified signup: only name, mobile, 4-digit passcode required
-    if (!name) return alert('Please enter your full name.');
-    if (!validateMobile(mobile)) return alert('Please enter a valid 10-digit mobile.');
-    if (!validatePasscode(passcode)) return alert('Please enter a 4-digit passcode.');
+    function closeProfileModal() {
+      const m = document.getElementById('profileModal');
+      if (m) m.style.display = 'none';
+    }
 
-    mobile = normalizeMobile(mobile);
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-    try {
-      const res = await fetch('/api/signup', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name, mobile, passcode })
-      });
-      const json = await res.json().catch(()=> ({}));
-      if (!res.ok) {
-        throw new Error((json && json.message) ? json.message : 'Signup failed');
-      }
-      closeModal('signup');
-      alert(json.message || 'Signup successful');
-      // If this is an admin account, send them to admin dashboard
-      if (json.user && json.user.is_admin) {
-        window.location.href = '/admin';
+      const name = document.getElementById('profileName').value.trim();
+      const licence = document.getElementById('profileLicence').value.trim();
+      const address = document.getElementById('profileAddress').value.trim();
+      const photo = document.getElementById('profilePhoto').files[0];
+
+      if (!name) {
+        alert('Please enter your name.');
         return;
       }
-      // Otherwise open profile modal and prefill values from server response
-      openProfileModal({ name: json.user?.name || name, mobile: json.user?.mobile || mobile });
-    } catch (err){
-      console.error(err);
-      alert(err.message || 'Signup failed. Please try again.');
-    }
-  });
 
-  // (no send-code flow in simplified signup/login)
+      try {
+        const fd = new FormData();
+        fd.append('name', name);
+        if (licence) fd.append('licence', licence);
+        fd.append('address', address);
+        if (photo) fd.append('photo', photo);
 
-  // Profile modal helpers
-  function openProfileModal(prefill){
-    const m = document.getElementById('profileModal');
-    if (!m) return;
-    // prefill fields
-    if (prefill){
-      if (prefill.name) document.getElementById('profileName').value = prefill.name;
-      if (prefill.mobile) document.getElementById('profileMobile').value = prefill.mobile;
-      if (prefill.licence) document.getElementById('profileLicence').value = prefill.licence;
-      if (prefill.address) document.getElementById('profileAddress').value = prefill.address;
-    }
-    m.style.display = 'block';
-  }
-  function closeProfileModal(){
-    const m = document.getElementById('profileModal'); if (m) m.style.display = 'none';
-  }
+        const res = await fetch('/api/profile', {
+          method: 'POST',
+          body: fd
+        });
 
-  // Profile form submit: send multipart/form-data so photo can be uploaded
-  document.getElementById('profileForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const name = document.getElementById('profileName').value.trim();
-    const mobile = document.getElementById('profileMobile').value.trim();
-    const licence = document.getElementById('profileLicence').value.trim();
-    const address = document.getElementById('profileAddress').value.trim();
-    const photo = document.getElementById('profilePhoto').files[0];
+        const json = await res.json().catch(() => ({}));
 
-  if (!name) return alert('Please enter your name.');
-  // profile updates require login, so we trust current session; mobile shown read-only
+        if (!res.ok) {
+          throw new Error(json.message || 'Profile save failed');
+        }
 
-    try {
-      const fd = new FormData();
-      fd.append('name', name);
-      // mobile is read-only and not required to submit as server uses session user
-      if (licence) fd.append('licence', licence);
-      fd.append('address', address);
-      if (photo) fd.append('photo', photo);
-
-      const res = await fetch('/api/profile', {
-        method: 'POST', body: fd
-      });
-      if (!res.ok) throw new Error('Profile save failed');
-      const json = await res.json();
-      closeProfileModal();
-      alert(json.message || 'Profile saved.');
-    } catch (err){
-      console.error(err);
-      alert('Failed to save profile.');
-    }
-  });
-
-  // Logout helper
-  async function logout(){
-    try {
-      const res = await fetch('/api/logout', { method: 'POST' });
-      if (!res.ok) {
-        const j = await res.json().catch(()=> ({}));
-        throw new Error(j.message || 'Logout failed');
+        closeProfileModal();
+        alert(json.message || 'Profile saved.');
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Failed to save profile.');
       }
-      window.location.reload();
-    } catch (err){
-      console.error('logout error', err);
-      alert('Logout failed.');
+    });
+
+    async function logout() {
+      try {
+        const res = await fetch('/api/logout', { method: 'POST' });
+        const j = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(j.message || 'Logout failed');
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error('logout error', err);
+        alert('Logout failed.');
+      }
     }
-  }
-
-  // (no-op placeholder removed)
-
-</script>
-
+  </script>
 </body>
 </html>
