@@ -1,3 +1,4 @@
+users = {}
 from flask import Flask, render_template, request, jsonify, send_from_directory, abort
 try:
     from flask_cors import CORS
@@ -239,7 +240,7 @@ def signup():
     mobile = data.get("mobile")
     passcode = data.get("passcode")
 
-    if not all([name, mobile, passcode]):
+    if not name or not mobile or not passcode:
         return jsonify({"message": "All fields required"}), 400
 
     if mobile in users:
@@ -248,17 +249,13 @@ def signup():
     users[mobile] = {
         "name": name,
         "mobile": mobile,
-        "passcode": passcode,
-        "licence": "",
-        "address": "",
-        "photo": "",
-        "is_admin": False
+        "passcode": passcode
     }
 
-    return jsonify({
-        "message": "Signup successful",
-        "user": users[mobile]
-    }), 200
+    print("Users:", users)  # 👈 DEBUG
+
+    return jsonify({"message": "Signup successful"}), 200
+
 
 
 
@@ -272,19 +269,22 @@ def login():
     mobile = data.get("mobile")
     passcode = data.get("passcode")
 
+    print("Login attempt:", mobile, passcode)  # 👈 DEBUG
+
     if not mobile or not passcode:
-        return jsonify({"message": "Missing credentials"}), 400
+        return jsonify({"message": "Missing fields"}), 400
 
     if mobile not in users:
         return jsonify({"message": "User not found"}), 404
 
     if users[mobile]["passcode"] != passcode:
-        return jsonify({"message": "Incorrect passcode"}), 401
+        return jsonify({"message": "Wrong passcode"}), 401
 
     return jsonify({
-        "message": f"Welcome {users[mobile]['name']}",
+        "message": "Login successful",
         "user": users[mobile]
     }), 200
+
 
 
 
