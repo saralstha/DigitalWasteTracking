@@ -23,6 +23,8 @@
         <li><a href="{{ url_for('report') }}">Report</a></li>
         <li><a href="{{ url_for('track') }}">Track</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
+        <li><a href="/reports">Reports</a></li>
+
           {% if current_user.is_authenticated %}
             <li><a href="#" onclick="openProfileModal({ name: '{{ current_user.name|e }}', mobile: '{{ current_user.mobile|e }}', licence: '{{ current_user.licence|e }}', address: '{{ current_user.address|e }}' })">Profile</a></li>
             {% if current_user.is_admin %}
