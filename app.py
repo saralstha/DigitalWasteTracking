@@ -233,35 +233,33 @@ def legacy_script_js():
 # ----------------------------
 @app.route('/api/signup', methods=['POST'])
 def signup():
-    data = request.get_json(silent=True)
-    if not data:
-        data = request.form.to_dict()
+    data = request.get_json()
 
-    name = data.get('name')
-    mobile = data.get('mobile')
-    passcode = data.get('passcode')
+    name = data.get("name")
+    mobile = data.get("mobile")
+    passcode = data.get("passcode")
 
     if not all([name, mobile, passcode]):
-        return jsonify({'message':'Name, mobile and passcode are required'}), 400
+        return jsonify({"message": "All fields required"}), 400
 
-    # normalize mobile digits
-    mobile_norm = ''.join(filter(str.isdigit, mobile))
-    # require exactly 10 digits for Australian mobile (e.g., 04xxxxxxxx)
-    if len(mobile_norm) != 10:
-        return jsonify({'message':'Please provide a valid 10-digit Australian mobile number'}), 400
+    if mobile in users:
+        return jsonify({"message": "User already exists"}), 409
 
-    if User.query.filter_by(identifier=mobile_norm).first():
-        return jsonify({'message':'User already exists'}), 409
+    users[mobile] = {
+        "name": name,
+        "mobile": mobile,
+        "passcode": passcode,
+        "licence": "",
+        "address": "",
+        "photo": "",
+        "is_admin": False
+    }
 
-    user = User(identifier=mobile_norm, name=name, mobile=mobile_norm)
-    user.password_hash = generate_password_hash(passcode)
-    db.session.add(user)
-    db.session.commit()
+    return jsonify({
+        "message": "Signup successful",
+        "user": users[mobile]
+    }), 200
 
-    # auto-login after signup
-    login_user(user)
-
-    return jsonify({'message':'Signup successful','user': user.to_dict()}), 200
 
 
 # ----------------------------
@@ -269,33 +267,31 @@ def signup():
 # ----------------------------
 @app.route('/api/login', methods=['POST'])
 def login():
-    data = request.get_json(silent=True)
-    if not data:
-        data = request.form.to_dict()
+    data = request.get_json()
 
-    mobile = data.get('mobile')
-    passcode = data.get('passcode')
+    mobile = data.get("mobile")
+    passcode = data.get("passcode")
 
     if not mobile or not passcode:
-        return jsonify({'message':'Mobile and passcode required'}), 400
+        return jsonify({"message": "Missing credentials"}), 400
 
-    mobile_norm = ''.join(filter(str.isdigit, mobile))
-    user = User.query.filter_by(identifier=mobile_norm).first()
-    if not user:
-        return jsonify({'message':'User not found'}), 404
+    if mobile not in users:
+        return jsonify({"message": "User not found"}), 404
 
-    if not user.password_hash or not check_password_hash(user.password_hash, passcode):
-        return jsonify({'message':'Invalid credentials'}), 401
+    if users[mobile]["passcode"] != passcode:
+        return jsonify({"message": "Incorrect passcode"}), 401
 
-    login_user(user)
-    return jsonify({'message': f'Welcome {user.name}!','user': user.to_dict()}), 200
+    return jsonify({
+        "message": f"Welcome {users[mobile]['name']}",
+        "user": users[mobile]
+    }), 200
+
 
 
 @app.route('/api/logout', methods=['POST'])
-@login_required
 def logout():
-    logout_user()
-    return jsonify({'message':'Logged out'}), 200
+    return jsonify({"message": "Logged out"})
+
 
 
 # ----------------------------
