@@ -23,18 +23,20 @@
         <li><a href="{{ url_for('report') }}">Report</a></li>
         <li><a href="{{ url_for('track') }}">Track</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
-        <li><a href="/reports">Reports</a></li>
+       <li><a href="{{ url_for('reports_page') }}">Reports</a></li>
 
-          {% if current_user.is_authenticated %}
-            <li><a href="#" onclick="openProfileModal({ name: '{{ current_user.name|e }}', mobile: '{{ current_user.mobile|e }}', licence: '{{ current_user.licence|e }}', address: '{{ current_user.address|e }}' })">Profile</a></li>
-            {% if current_user.is_admin %}
-              <li><a href="{{ url_for('admin_page') }}">Admin</a></li>
-            {% endif %}
-            <li><button class="btn" onclick="logout()">Logout</button></li>
-          {% else %}
-            <li><button class="btn btn-primary" onclick="openAuthChoice()">Account</button></li>
-            <li><a href="#" onclick="openAdminLogin()">Admin</a></li>
-          {% endif %}
+
+         {% if current_user %}
+  <li><a href="#" onclick="openProfileModal({ name: '{{ current_user.name|e }}', mobile: '{{ current_user.mobile|e }}', licence: '{{ current_user.licence|e }}', address: '{{ current_user.address|e }}' })">Profile</a></li>
+  {% if current_user.is_admin %}
+    <li><a href="{{ url_for('admin_page') }}">Admin</a></li>
+  {% endif %}
+  <li><button class="btn" onclick="logout()">Logout</button></li>
+{% else %}
+  <li><button class="btn btn-primary" onclick="openAuthChoice()">Account</button></li>
+  <li><a href="#" onclick="openAdminLogin()">Admin</a></li>
+{% endif %}
+
       </ul>
     </div>
   </nav>
