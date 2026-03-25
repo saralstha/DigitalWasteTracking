@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EWaste - Smart E-Waste Management</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 
 <body>
@@ -18,12 +18,21 @@
         <i class="fas fa-recycle"></i><span>EWaste</span>
       </div>
       <ul class="nav-menu">
-        <li><a href="#home">Home</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#report">Report</a></li>
-        <li><a href="#track">Track</a></li>
-        <li><a href="#about">About</a></li>
-        <li><button class="btn btn-primary" onclick="openModal('login')">Login</button></li>
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('home') }}#services">Services</a></li>
+        <li><a href="{{ url_for('report') }}">Report</a></li>
+        <li><a href="{{ url_for('track') }}">Track</a></li>
+        <li><a href="{{ url_for('about') }}">About</a></li>
+          {% if current_user.is_authenticated %}
+            <li><a href="#" onclick="openProfileModal({ name: '{{ current_user.name|e }}', mobile: '{{ current_user.mobile|e }}', licence: '{{ current_user.licence|e }}', address: '{{ current_user.address|e }}' })">Profile</a></li>
+            {% if current_user.is_admin %}
+              <li><a href="{{ url_for('admin_page') }}">Admin</a></li>
+            {% endif %}
+            <li><button class="btn" onclick="logout()">Logout</button></li>
+          {% else %}
+            <li><button class="btn btn-primary" onclick="openAuthChoice()">Account</button></li>
+            <li><a href="#" onclick="openAdminLogin()">Admin</a></li>
+          {% endif %}
       </ul>
     </div>
   </nav>
@@ -33,8 +42,8 @@
     <div class="container">
       <h1>Digital Waste Tracking System</h1>
       <p>Monitor, manage, and recycle e-waste responsibly for a greener future.</p>
-      <button class="btn btn-primary" onclick="scrollToSection('report')">Report Waste</button>
-      <button class="btn btn-secondary" onclick="scrollToSection('track')">View Map</button>
+      <a class="btn btn-primary" href="{{ url_for('report') }}">Report Waste</a>
+      <a class="btn btn-secondary" href="{{ url_for('track') }}">View Map</a>
     </div>
   </section>
 
@@ -186,133 +195,135 @@
       const data = await res.json();
       return data.length ? [data[0].lat, data[0].lon] : null;
     }
-    async function loadReports() {
+    async function loadReports(){
+      try{
+        const res = await fetch('/api/reports');
+        const data = await res.json();
 
-  const res = await fetch('/api/reports');
-  const data = await res.json();
+        for (const r of data){
+          let lat = parseFloat(r.lat);
+          let lon = parseFloat(r.lon);
+          if (!isFinite(lat) || !isFinite(lon)){
+            // try geocoding if lat/lon not provided
+            const coords = await getCoordinates(r.location);
+            if (!coords) continue;
+            lat = parseFloat(coords[0]); lon = parseFloat(coords[1]);
+          }
 
-  for (const r of data) {
+          const marker = L.marker([lat, lon]).addTo(map);
+          let popup = `<b>${r.type || 'Unknown'} Waste</b><br>`;
+          if (r.weight) popup += `${r.weight} kg<br>`;
+          if (r.location) popup += `${r.location}<br>`;
+          if (r.photo){
+            const imageUrl = window.getReportImageUrl ? window.getReportImageUrl(r.photo) : ('/static/uploads/' + encodeURIComponent(r.photo));
+            popup += `<img src="${imageUrl}" width="140" style="margin-top:6px;border-radius:6px;">`;
+          }
+          marker.bindPopup(popup);
+        }
 
-    const coords = await getCoordinates(r.location);
-
-    if(coords){
-
-      const marker = L.marker(coords).addTo(map);
-
-      marker.bindPopup(
-        `<b>${r.type} Waste</b><br>${r.weight} kg<br>${r.location}`
-      );
-
+        // update the recent reports list (if present)
+        if (window.renderReportsList) window.renderReportsList('reportList');
+      } catch(e){ console.error('loadReports error', e); }
     }
 
-  }
-
-}
-
-loadReports();
+    loadReports();
 
 
-   
+    async function submitReport(){
+      const loc = document.getElementById('location').value;
+      const type = document.getElementById('type').value;
+      const weight = document.getElementById('weight').value;
+      const file = document.getElementById('photo').files[0];
 
-async function submitReport() {
+      const coords = await getCoordinates(loc);
+      if (!coords){ alert('Could not resolve location'); return; }
 
-  const loc = document.getElementById('location').value;
-  const type = document.getElementById('type').value;
-  const weight = document.getElementById('weight').value;
-  const file = document.getElementById('photo').files[0];
+      const [lat, lon] = coords;
+      const fd = new FormData();
+      fd.append('location', loc); fd.append('type', type); fd.append('weight', weight);
+      if (file) fd.append('photo', file);
+      fd.append('lat', lat); fd.append('lon', lon);
 
-  if(!file){
-    alert("Please upload a photo");
-    return;
-  }
+      const res = await fetch('/api/report', { method:'POST', body: fd });
+      const j = await res.json();
+      if (!res.ok) return alert('Error: ' + (j.message || res.status));
 
-  const coords = await getCoordinates(loc);
+      // add marker using the saved report data from server (ensures correct photo filename)
+      const saved = j.report || { location: loc, type, weight, lat, lon, photo: (file && file.name) };
+      const marker = L.marker([parseFloat(saved.lat), parseFloat(saved.lon)]).addTo(map);
+      let popup = `<b>${saved.type || 'Unknown'} Waste</b><br>`;
+      if (saved.weight) popup += `${saved.weight} kg<br>`;
+      if (saved.location) popup += `${saved.location}<br>`;
+      if (saved.photo){
+        const imageUrl = window.getReportImageUrl ? window.getReportImageUrl(saved.photo) : ('/static/uploads/' + encodeURIComponent(saved.photo));
+        popup += `<img src="${imageUrl}" width="140" style="margin-top:6px;border-radius:6px;">`;
+      }
+      marker.bindPopup(popup).openPopup();
 
-  if (!coords){
-    alert('Invalid location');
-    return;
-  }
+      // refresh recent list
+      if (window.renderReportsList) window.renderReportsList('reportList');
 
-  const [lat, lon] = coords;
-
-  const formData = new FormData();
-
-  formData.append("location", loc);
-  formData.append("type", type);
-  formData.append("weight", weight);
-  formData.append("photo", file);
-  formData.append("lat", lat);
-  formData.append("lon", lon);
-
-  const res = await fetch('/api/report', {
-    method: 'POST',
-    body: formData
-  });
-
-  const data = await res.json();
-
-  alert(data.message);
-
-  const marker = L.marker([lat, lon]).addTo(map);
-
-  marker.bindPopup(`
-    <b>${type} Waste</b><br>
-    ${weight} kg<br>
-    ${loc}<br>
-    <img src="/static/uploads/${file.name}" width="120">
-  `);
-
-  document.getElementById('reportForm').reset();
-}
-
+      document.getElementById('reportForm').reset();
+    }
 
   </script>
   
 </div>
-<!-- Login Modal -->
-<div id="loginModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal('login')">&times;</span>
-    <h2>Login to EWaste</h2>
-    <form id="loginForm">
-      <label>Mobile number (NSW)</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="tel" id="loginMobile" name="mobile" placeholder="04XXXXXXXX" pattern="\d{8,12}" required style="flex:1;">
-        <button type="button" id="loginSendCodeBtn" class="btn" style="padding:6px 10px;">Send code</button>
-      </div>
-      <small id="loginSendCodeMsg" style="color:#555; display:block; margin-top:6px;"></small>
-      <label style="margin-top:8px; display:block;">4-digit code</label>
-      <input type="text" id="loginCode" name="code" placeholder="1234" maxlength="4" pattern="\d{4}" required>
-      <div style="margin-top:12px; text-align:right;">
-        <button type="submit" class="btn btn-primary">Login</button>
-      </div>
-    </form>
-    <p style="margin-top:12px;">New user? <a href="#" onclick="switchModal()">Sign up here</a></p>
+<!-- Account Modal (combined Login & Sign Up) -->
+<div id="accountModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:520px;">
+    <span class="close" onclick="closeAccountModal()">&times;</span>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button id="tabLogin" class="btn" onclick="showAccountTab('login')">Login</button>
+      <button id="tabSignup" class="btn btn-primary" onclick="showAccountTab('signup')">Sign Up</button>
+    </div>
+
+    <div id="accountLogin" class="account-panel">
+      <h3>Login to EWaste</h3>
+      <form id="loginForm">
+        <label>Mobile number (10 digits)</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="tel" id="loginMobile" name="mobile" placeholder="04XXXXXXXX" required style="flex:1;">
+        </div>
+        <label style="margin-top:8px; display:block;">Passcode</label>
+        <input type="password" id="loginPasscode" name="passcode" placeholder="Your passcode" required>
+        <div style="margin-top:12px; text-align:right;">
+          <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+      </form>
+      <p style="margin-top:12px;">New user? <a href="#" onclick="showAccountTab('signup')">Sign up here</a></p>
+    </div>
+
+    <div id="accountSignup" class="account-panel" style="display:none;">
+      <h3>Create an Account</h3>
+      <form id="signupForm">
+        <label>Full Name</label>
+        <input type="text" id="signupName" name="name" required>
+        <label>Mobile number (10 digits)</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="tel" id="signupMobile" name="mobile" placeholder="04XXXXXXXX" required style="flex:1;">
+        </div>
+        <label style="margin-top:8px; display:block;">Passcode (4 digits)</label>
+        <input type="password" id="signupPasscode" name="passcode" placeholder="1234" maxlength="4" pattern="\d{4}" required>
+        <div style="margin-top:12px; text-align:right;">
+          <button type="submit" class="btn btn-primary">Sign Up</button>
+        </div>
+      </form>
+      <p style="margin-top:12px;">Already have an account? <a href="#" onclick="showAccountTab('login')">Login here</a></p>
+    </div>
   </div>
 </div>
 
-<!-- Signup Modal -->
-<div id="signupModal" class="modal" style="display:none;">
+<!-- Auth Choice Modal (combined entry point) -->
+<div id="authChoiceModal" class="modal" style="display:none;">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('signup')">&times;</span>
-    <h2>Create an Account</h2>
-    <form id="signupForm">
-      <label>Full Name</label>
-      <input type="text" id="signupName" name="name" required>
-      <label>Mobile number (NSW)</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="tel" id="signupMobile" name="mobile" placeholder="04XXXXXXXX" pattern="\d{8,12}" required style="flex:1;">
-        <button type="button" id="signupSendCodeBtn" class="btn" style="padding:6px 10px;">Send code</button>
-      </div>
-      <small id="signupSendCodeMsg" style="color:#555; display:block; margin-top:6px;"></small>
-      <label style="margin-top:8px; display:block;">4-digit code</label>
-      <input type="text" id="signupCode" name="code" placeholder="1234" maxlength="4" pattern="\d{4}" required>
-  <!-- Licence removed from signup to simplify flow: only name, mobile and 4-digit PIN required -->
-      <div style="margin-top:12px; text-align:right;">
-        <button type="submit" class="btn btn-primary">Sign Up</button>
-      </div>
-    </form>
-    <p style="margin-top:12px;">Already have an account? <a href="#" onclick="switchModal()">Login here</a></p>
+    <span class="close" onclick="closeAuthChoice()">&times;</span>
+    <h2>Account</h2>
+    <p style="margin-top:6px; margin-bottom:12px;">Already have an account? Or create a new one.</p>
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px;">
+      <button class="btn" onclick="(function(){ closeAuthChoice(); openModal('login'); })()">Login</button>
+      <button class="btn btn-primary" onclick="(function(){ closeAuthChoice(); openModal('signup'); })()">Sign Up</button>
+    </div>
   </div>
 </div>
 
@@ -325,8 +336,8 @@ async function submitReport() {
       <label>Full Name</label>
       <input type="text" id="profileName" name="name" required>
 
-      <label>Mobile number</label>
-      <input type="tel" id="profileMobile" name="mobile" readonly>
+  <label>Mobile number</label>
+  <input type="text" id="profileMobile" name="mobile" readonly>
 
   <label>NSW Licence Number (optional)</label>
   <input type="text" id="profileLicence" name="licence">
@@ -347,31 +358,45 @@ async function submitReport() {
 
 <script>
   // Simple modal helpers in case other scripts are not loaded
-  function openModal(which){
-    if (which === 'login') document.getElementById('loginModal').style.display = 'block';
-    if (which === 'signup') document.getElementById('signupModal').style.display = 'block';
+  function openModal(which){ openAccountModal(which); }
+  function closeModal(which){ if (which === 'login' || which === 'signup') closeAccountModal(); }
+
+  function openAccountModal(which){
+    const m = document.getElementById('accountModal'); if (!m) return;
+    m.style.display = 'block';
+    showAccountTab(which || 'login');
   }
-  function closeModal(which){
-    if (which === 'login') document.getElementById('loginModal').style.display = 'none';
-    if (which === 'signup') document.getElementById('signupModal').style.display = 'none';
+  function closeAccountModal(){ const m = document.getElementById('accountModal'); if (m) m.style.display = 'none'; }
+
+  function showAccountTab(tab){
+    const loginPanel = document.getElementById('accountLogin');
+    const signupPanel = document.getElementById('accountSignup');
+    const tabLogin = document.getElementById('tabLogin');
+    const tabSignup = document.getElementById('tabSignup');
+    if (!loginPanel || !signupPanel) return;
+    if (tab === 'signup'){
+      loginPanel.style.display = 'none'; signupPanel.style.display = 'block';
+      if (tabLogin) tabLogin.classList.remove('btn-primary'); if (tabSignup) tabSignup.classList.add('btn-primary');
+    } else {
+      loginPanel.style.display = 'block'; signupPanel.style.display = 'none';
+      if (tabLogin) tabLogin.classList.add('btn-primary'); if (tabSignup) tabSignup.classList.remove('btn-primary');
+    }
   }
+
   function switchModal(){
-    // Switch between login and signup modals
-    const l = document.getElementById('loginModal');
-    const s = document.getElementById('signupModal');
-    if (l.style.display === 'block'){
-      l.style.display = 'none'; s.style.display = 'block';
-    } else { s.style.display = 'none'; l.style.display = 'block'; }
+    // Toggle between login and signup inside the combined modal
+    const loginPanel = document.getElementById('accountLogin');
+    if (!loginPanel) return;
+    if (loginPanel.style.display === 'block') showAccountTab('signup'); else showAccountTab('login');
   }
 
   // Basic validators
   function validateMobile(m){
     if (!m) return false;
-    // Accept digits, spaces, +; require at least 8 digits total (covers local formats)
     const digits = m.replace(/\D/g, '');
-    return digits.length >= 8 && digits.length <= 12;
+    return digits.length === 10; // require 10 digits for AU mobile
   }
-  function validate4DigitCode(c){ return /^\d{4}$/.test(c); }
+  function validatePasscode(p){ return /^\d{4}$/.test(p); }
   function validateLicence(l){
     if (!l) return false;
     // NSW licence numbers vary; accept 5-12 alphanumeric chars as a reasonable constraint
@@ -382,29 +407,54 @@ async function submitReport() {
     return m.replace(/\D/g, '');
   }
 
+  // Open the login modal in "admin" mode (the login handler will redirect admins to /admin)
+  function openAdminLogin(){
+    window.wantAdminLogin = true;
+    openModal('login');
+  }
+
+  // Account choice modal helpers
+  function openAuthChoice(){
+    const m = document.getElementById('authChoiceModal'); if (m) m.style.display = 'block';
+  }
+  function closeAuthChoice(){
+    const m = document.getElementById('authChoiceModal'); if (m) m.style.display = 'none';
+  }
+
   // Login form handler
   document.getElementById('loginForm').addEventListener('submit', async function(e){
     e.preventDefault();
     let mobile = document.getElementById('loginMobile').value.trim();
-    const code = document.getElementById('loginCode').value.trim();
-    if (!validateMobile(mobile)) return alert('Please enter a valid mobile number.');
-    if (!validate4DigitCode(code)) return alert('Please enter the 4-digit code.');
+    const passcode = document.getElementById('loginPasscode').value.trim();
+    if (!validateMobile(mobile)) return alert('Please enter a valid 10-digit mobile number.');
+    if (!validatePasscode(passcode)) return alert('Please enter a 4-digit passcode.');
 
     mobile = normalizeMobile(mobile);
 
     try {
       const res = await fetch('/api/login', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ mobile, code })
+        body: JSON.stringify({ mobile, passcode })
       });
+      const json = await res.json().catch(()=> ({}));
       if (!res.ok) {
-        let errMsg = `Login failed (status ${res.status})`;
-        try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); } catch(e){ try { const t = await res.text(); if (t) errMsg = t; } catch(e){} }
-        throw new Error(errMsg);
+        throw new Error((json && json.message) ? json.message : `Login failed (status ${res.status})`);
       }
-      const json = await res.json();
       closeModal('login');
+      // If admin login was requested, redirect admins to /admin, otherwise show success
+      if (window.wantAdminLogin) {
+        window.wantAdminLogin = false;
+        if (json.user && json.user.is_admin) {
+          window.location.href = '/admin';
+          return;
+        } else {
+          alert('This account is not an admin.');
+          return;
+        }
+      }
       alert(json.message || 'Logged in successfully');
+      // refresh to update UI / show profile link
+      window.location.reload();
     } catch (err){
       console.error('login error', err);
       alert(err.message || 'Login failed. Please check your number and code.');
@@ -415,73 +465,40 @@ async function submitReport() {
   document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
     const name = document.getElementById('signupName').value.trim();
-    const mobile = document.getElementById('signupMobile').value.trim();
-    const code = document.getElementById('signupCode').value.trim();
-    // Simplified signup: only name, mobile, 4-digit code required
+    let mobile = document.getElementById('signupMobile').value.trim();
+    const passcode = document.getElementById('signupPasscode').value.trim();
+    // Simplified signup: only name, mobile, 4-digit passcode required
     if (!name) return alert('Please enter your full name.');
-    if (!validateMobile(mobile)) return alert('Please enter a valid mobile number.');
-    if (!validate4DigitCode(code)) return alert('Please enter a 4-digit code.');
+    if (!validateMobile(mobile)) return alert('Please enter a valid 10-digit mobile.');
+    if (!validatePasscode(passcode)) return alert('Please enter a 4-digit passcode.');
+
+    mobile = normalizeMobile(mobile);
 
     try {
       const res = await fetch('/api/signup', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name, mobile, code })
+        body: JSON.stringify({ name, mobile, passcode })
       });
-      if (!res.ok) throw new Error('Signup failed');
-      const json = await res.json();
+      const json = await res.json().catch(()=> ({}));
+      if (!res.ok) {
+        throw new Error((json && json.message) ? json.message : 'Signup failed');
+      }
       closeModal('signup');
-      alert(json.message || 'Signup successful. You can now log in.');
+      alert(json.message || 'Signup successful');
+      // If this is an admin account, send them to admin dashboard
+      if (json.user && json.user.is_admin) {
+        window.location.href = '/admin';
+        return;
+      }
+      // Otherwise open profile modal and prefill values from server response
+      openProfileModal({ name: json.user?.name || name, mobile: json.user?.mobile || mobile });
     } catch (err){
       console.error(err);
-      alert('Signup failed. Please try again.');
+      alert(err.message || 'Signup failed. Please try again.');
     }
   });
 
-  // sendCode helper: which = 'login' | 'signup'
-  async function sendCode(which){
-    const mobileEl = document.getElementById(which === 'login' ? 'loginMobile' : 'signupMobile');
-    const msgEl = document.getElementById(which === 'login' ? 'loginSendCodeMsg' : 'signupSendCodeMsg');
-    const btn = document.getElementById(which === 'login' ? 'loginSendCodeBtn' : 'signupSendCodeBtn');
-    let mobile = mobileEl.value.trim();
-    if (!validateMobile(mobile)) { alert('Please enter a valid mobile number before requesting a code.'); return; }
-    mobile = normalizeMobile(mobile);
-
-    try {
-      btn.disabled = true; btn.textContent = 'Sending...';
-      msgEl.textContent = '';
-      const res = await fetch('/api/send_code', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ mobile, purpose: which })
-      });
-      if (!res.ok) {
-        let errMsg = `Send code failed (status ${res.status})`;
-        try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); } catch(e){ try { const t = await res.text(); if (t) errMsg = t; } catch(e){} }
-        throw new Error(errMsg);
-      }
-      const json = await res.json();
-      msgEl.textContent = json.message || 'Code sent. It may take a moment to arrive.';
-
-      // start 60s cooldown
-      let remaining = 60;
-      btn.disabled = true;
-      const origText = 'Send code';
-      btn.textContent = `${origText} (${remaining}s)`;
-      const iv = setInterval(() => {
-        remaining -= 1;
-        if (remaining <= 0){ clearInterval(iv); btn.disabled = false; btn.textContent = origText; }
-        else btn.textContent = `${origText} (${remaining}s)`;
-      }, 1000);
-    } catch (err){
-      console.error(err);
-      btn.disabled = false;
-      btn.textContent = 'Send code';
-      msgEl.textContent = err.message || 'Failed to send code. Try again later.';
-    }
-  }
-
-  // Wire up send code buttons
-  document.getElementById('loginSendCodeBtn').addEventListener('click', () => sendCode('login'));
-  document.getElementById('signupSendCodeBtn').addEventListener('click', () => sendCode('signup'));
+  // (no send-code flow in simplified signup/login)
 
   // Profile modal helpers
   function openProfileModal(prefill){
@@ -509,13 +526,13 @@ async function submitReport() {
     const address = document.getElementById('profileAddress').value.trim();
     const photo = document.getElementById('profilePhoto').files[0];
 
-    if (!name) return alert('Please enter your name.');
-    if (!validateMobile(mobile)) return alert('Invalid mobile number.');
+  if (!name) return alert('Please enter your name.');
+  // profile updates require login, so we trust current session; mobile shown read-only
 
     try {
       const fd = new FormData();
       fd.append('name', name);
-      fd.append('mobile', mobile);
+      // mobile is read-only and not required to submit as server uses session user
       if (licence) fd.append('licence', licence);
       fd.append('address', address);
       if (photo) fd.append('photo', photo);
@@ -533,54 +550,23 @@ async function submitReport() {
     }
   });
 
-  // Update signup handler to open profile modal after successful signup
-  // We'll keep the original fetch but modify success path
-  (function patchSignupHandler(){
-    const orig = document.getElementById('signupForm').onsubmit;
-    // Re-attach by replacing previous listener: remove existing and add new
-  })();
-
-  // Replace the signup form listener to open profile modal on success
-  document.getElementById('signupForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const name = document.getElementById('signupName').value.trim();
-    let mobile = document.getElementById('signupMobile').value.trim();
-    const code = document.getElementById('signupCode').value.trim();
-    // Simplified signup handler (opens profile modal afterwards). Licence not required here.
-    mobile = normalizeMobile(mobile);
-
-    // primary attempt: JSON POST to /api/signup
+  // Logout helper
+  async function logout(){
     try {
-      let res = await fetch('/api/signup', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name, mobile, code })
-      });
-
-      // If server returns 405 Method Not Allowed, try a fallback (FormData to /signup)
-      if (res.status === 405) {
-        console.warn('/api/signup returned 405 — retrying as form POST to /signup');
-  const fd = new FormData();
-  fd.append('name', name);
-  fd.append('mobile', mobile);
-  fd.append('code', code);
-        // try posting to '/signup' (non-API route) which some Flask apps expect
-        res = await fetch('/signup', { method: 'POST', body: fd });
-      }
-
+      const res = await fetch('/api/logout', { method: 'POST' });
       if (!res.ok) {
-        let errMsg = `Signup failed (status ${res.status})`;
-        try { const j = await res.json(); errMsg = j.message || JSON.stringify(j); } catch(e){ try { const t = await res.text(); if (t) errMsg = t; } catch(e){} }
-        throw new Error(errMsg);
+        const j = await res.json().catch(()=> ({}));
+        throw new Error(j.message || 'Logout failed');
       }
-
-      const json = await res.json().catch(() => ({}));
-      // Instead of closing immediately, open profile modal to let user complete profile
-      openProfileModal({ name, mobile, licence });
+      window.location.reload();
     } catch (err){
-      console.error('signup error', err);
-      alert(err.message || 'Signup failed. Please try again.');
+      console.error('logout error', err);
+      alert('Logout failed.');
     }
-  });
+  }
+
+  // (no-op placeholder removed)
+
 </script>
 
 </body>

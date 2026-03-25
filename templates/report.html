@@ -2,36 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Report Waste | Digital Waste Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-async function submitReport() {
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo"><i class="fas fa-recycle"></i><span>EWaste</span></div>
+      <ul class="nav-menu">
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('home') }}#services">Services</a></li>
+        <li><a href="{{ url_for('report') }}" class="active">Report</a></li>
+        <li><a href="{{ url_for('track') }}">Track</a></li>
+        <li><a href="{{ url_for('about') }}">About</a></li>
+      </ul>
+    </div>
+  </nav>
 
-  const loc = document.getElementById('location').value;
-  const type = document.getElementById('type').value;
-  const weight = document.getElementById('weight').value;
-  const file = document.getElementById('photo').files[0];
+  <main class="page-content">
+    <section class="report-section">
+      <div class="container">
+        <h2 class="text-center">Report Waste</h2>
+        <div class="report-card mt-20">
+          <form id="reportForm" enctype="multipart/form-data">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="location">Location (Address or Suburb)</label>
+                <input id="location" name="location" required>
+              </div>
+              <div class="form-group">
+                <label for="type">Waste Type</label>
+                <select id="type" name="type" required>
+                  <option value="">Select</option>
+                  <option>Plastic</option>
+                  <option>Metal</option>
+                  <option>Electronic</option>
+                  <option>Organic</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row mt-20">
+              <div class="form-group">
+                <label for="weight">Approx Weight (kg)</label>
+                <input id="weight" name="weight" type="number" step="0.1" required>
+              </div>
+              <div class="form-group">
+                <label for="photo">Photo</label>
+                <input id="photo" name="photo" type="file" accept="image/*">
+              </div>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+              <button type="button" class="btn btn-primary" onclick="submitReport()">Submit Report</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
 
-  const formData = new FormData();
-  formData.append("location", loc);
-  formData.append("type", type);
-  formData.append("weight", weight);
-  formData.append("photo", file);
+  <footer class="footer"><p>&copy; 2025 EWaste</p></footer>
 
-  await fetch('/api/report', {
-    method: 'POST',
-    body: formData
-  });
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    async function submitReport(){
+      const loc = document.getElementById('location').value;
+      const type = document.getElementById('type').value;
+      const weight = document.getElementById('weight').value;
+      const file = document.getElementById('photo').files[0];
 
-  alert("Waste report submitted!");
+      const fd = new FormData();
+      fd.append('location', loc);
+      fd.append('type', type);
+      fd.append('weight', weight);
+      if (file) fd.append('photo', file);
 
-  document.getElementById("reportForm").reset();
-
-  loadReports();
-}
-
-
+      const res = await fetch('/api/report', { method: 'POST', body: fd });
+      const j = await res.json();
+      if (!res.ok) return alert('Error: ' + (j.message || res.status));
+      alert(j.message || 'Report submitted');
+      document.getElementById('reportForm').reset();
+    }
   </script>
 </body>
 </html>

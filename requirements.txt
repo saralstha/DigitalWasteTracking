@@ -1,4 +1,9 @@
+
 Flask
 flask-cors
 gunicorn
-werkzeug
+Flask-SQLAlchemy
+Flask-Login
+Flask-Mail
+twilio
+psycopg2-binary

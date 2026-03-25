@@ -154,7 +154,9 @@
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
-      window._trackMap = map;
+  window._trackMap = map;
+  // expose map reference for debugging or external controls
+  window._trackMapRef = map;
       // a layer group to hold markers so we can clear them easily
       window._trackMarkersGroup = L.layerGroup().addTo(map);
 
@@ -176,20 +178,35 @@
             let popup = `<b>${escapeHtml(r.type || 'Unknown')} Waste</b><br>`;
             if (r.weight) popup += `${escapeHtml(String(r.weight))} kg<br>`;
             if (r.location) popup += `📍 ${escapeHtml(r.location)}<br>`;
-            if (r.image){
+            // server currently stores uploaded filename in `photo`; some older data
+            // or other codepaths might use `image`. Accept either.
+            const imageName = r.photo || r.image;
+            if (imageName){
               // imageBase should be provided by server-side template (url_for)
-              const safeImagePath = (imageBase ? imageBase.replace(/\/$/, '') + '/' : '') + encodeURIComponent(r.image);
+              const safeImagePath = (imageBase ? imageBase.replace(/\/$/, '') + '/' : '') + encodeURIComponent(imageName);
               popup += `<img src="${safeImagePath}" width="200" style="margin-top:5px;border-radius:5px;">`;
             }
 
             marker.bindPopup(popup);
             window._trackMarkersGroup.addLayer(marker);
           });
+          // if we added markers, auto-fit the map to show them
+          try {
+            const layers = window._trackMarkersGroup.getLayers();
+            if (layers && layers.length > 0){
+              const bounds = window._trackMarkersGroup.getBounds();
+              if (bounds && typeof bounds.isValid === 'function' ? bounds.isValid() : true){
+                map.fitBounds(bounds, { padding: [50, 50] });
+              }
+            }
+          } catch(e){
+            // non-fatal if fitBounds fails
+            // console.warn('fitBounds failed', e);
+          }
         } catch (e){
           console.error('refreshMarkers error', e);
         }
       }
-loadReports();
       // immediately load once
       refreshMarkers();
 

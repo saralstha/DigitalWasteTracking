@@ -4,23 +4,88 @@
   <meta charset="UTF-8">
   <title>Track Waste | Digital Waste Tracker</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- app scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
   <h2>Track Reported Waste</h2>
   <div id="map" style="height: 600px; border-radius: 10px;"></div>
-<script>
+
+  <section id="report-form" style="margin-top:18px; max-width:720px;">
+    <h3>Submit a Report</h3>
+    <form id="submitReportForm">
+      <label>Location (description)<br><input type="text" name="location" id="r_location" required placeholder="e.g. Park near 3rd Ave"></label>
+      <label>Type<br><input type="text" name="type" id="r_type" required placeholder="e.g. Plastic"></label>
+      <label>Weight (kg)<br><input type="number" step="0.1" name="weight" id="r_weight" required></label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+        <label style="flex:1">Latitude<br><input type="text" name="lat" id="r_lat"></label>
+        <label style="flex:1">Longitude<br><input type="text" name="lon" id="r_lon"></label>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+        <button type="button" id="useMyLocation">Use my location</button>
+        <input type="file" id="r_photo" name="photo">
+        <button type="submit">Submit Report</button>
+      </div>
+    </form>
+  </section>
+
+  <script>
   // Use the shared initTrackMap function (defined in script.js)
   document.addEventListener('DOMContentLoaded', function(){
     if (typeof window.initTrackMap === 'function'){
-      window.initTrackMap({
+      // save controller so we can refresh after submitting a report
+      window._trackMapController = window.initTrackMap({
         mapId: 'map',
         center: [-33.8688, 151.2093],
         zoom: 11,
         refreshMs: 15000,
         // server-side template will expand this to the uploads folder URL
         imageBase: "{{ url_for('static', filename='uploads') }}"
+      });
+      // wire up the report form
+      const form = document.getElementById('submitReportForm');
+      const useBtn = document.getElementById('useMyLocation');
+      useBtn.addEventListener('click', function(){
+        if (!navigator.geolocation) return alert('Geolocation not available');
+        navigator.geolocation.getCurrentPosition(function(pos){
+          document.getElementById('r_lat').value = pos.coords.latitude;
+          document.getElementById('r_lon').value = pos.coords.longitude;
+        }, function(err){ alert('Could not get location: ' + err.message); });
+      });
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const fd = new FormData();
+        fd.append('location', document.getElementById('r_location').value);
+        fd.append('type', document.getElementById('r_type').value);
+        fd.append('weight', document.getElementById('r_weight').value);
+        const lat = document.getElementById('r_lat').value;
+        const lon = document.getElementById('r_lon').value;
+        if (lat) fd.append('lat', lat);
+        if (lon) fd.append('lon', lon);
+        const photo = document.getElementById('r_photo').files[0];
+        if (photo) fd.append('photo', photo);
+
+        try {
+          const res = await fetch('/api/report', { method: 'POST', body: fd });
+          const j = await res.json();
+          if (!res.ok) throw new Error(j.message || 'Failed');
+          alert('Report saved');
+          // refresh markers
+          if (window._trackMapController && typeof window._trackMapController.refresh === 'function'){
+            window._trackMapController.refresh();
+          } else if (window._trackMapRef){
+            // fallback: reload the page
+            location.reload();
+          }
+          // reset form (keep lat/lon)
+          form.reset();
+        } catch (err){
+          alert('Error saving report: ' + (err.message || err));
+        }
       });
     } else {
       console.warn('initTrackMap not available yet. Make sure script.js is loaded before this file.');

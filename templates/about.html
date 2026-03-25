@@ -4,17 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About | Digital Waste Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <header><h1>About Us</h1></header>
-
-  <nav>
-    <a href="/">Home</a>
-    <a href="/dashboard">Dashboard</a>
-    <a href="/tracking">Tracking</a>
-    <a href="/report">Report</a>
-    <a href="/about" class="active">About</a>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo"><i class="fas fa-recycle"></i><span>EWaste</span></div>
+      <ul class="nav-menu">
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('home') }}#services">Services</a></li>
+        <li><a href="{{ url_for('report') }}">Report</a></li>
+        <li><a href="{{ url_for('track') }}">Track</a></li>
+        <li><a href="{{ url_for('about') }}" class="active">About</a></li>
+      </ul>
+    </div>
   </nav>
 
   <div class="container">
@@ -31,6 +35,6 @@
   </div>
 
   <footer>© 2025 Digital Waste Tracker</footer>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

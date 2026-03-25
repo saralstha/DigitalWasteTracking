@@ -2,76 +2,84 @@
 <html>
 <head>
 <title>Admin Dashboard</title>
-
-<style>
-body{
-font-family: Arial;
-padding:40px;
-background:#f4f4f4;
-}
-
-.card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
-
-h2{
-margin-top:0;
-}
-</style>
-
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
 
-<h1>Waste Management Admin Dashboard</h1>
+	<nav class="navbar">
+		<div class="nav-container">
+			<div class="nav-logo"><i class="fas fa-recycle"></i><span>EWaste Admin</span></div>
+			<ul class="nav-menu">
+				<li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+				<li><a href="{{ url_for('admin_page') }}" class="active">Admin</a></li>
+				<li><a href="{{ url_for('home') }}">Site</a></li>
+			</ul>
+		</div>
+	</nav>
 
-<div class="card">
-<h2>Total Users</h2>
-<p id="users">Loading...</p>
-</div>
+	<main class="page-content">
+		<div class="container">
+			<h1>Waste Management Admin Dashboard</h1>
 
-<div class="card">
-<h2>Total Waste Reports</h2>
-<p id="reports">Loading...</p>
-</div>
+			<div class="card">
+				<h2>Total Users</h2>
+				<p id="users">Loading...</p>
+			</div>
 
-<div class="card">
-<h2>Waste Report List</h2>
-<ul id="reportList"></ul>
-</div>
+			<div class="card">
+				<h2>Total Waste Reports</h2>
+				<p id="reports">Loading...</p>
+			</div>
 
-<script>
+			<div class="card">
+				<h2>Waste Report List</h2>
+				<div id="reportList"></div>
+			</div>
+		</div>
+	</main>
 
-async function loadDashboard(){
+	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+	<script>
+		async function loadDashboard(){
+			const res = await fetch('/api/admin/dashboard');
+			const data = await res.json();
 
-const res = await fetch('/api/admin/dashboard');
-const data = await res.json();
+			document.getElementById('users').innerText = data.total_users;
+			document.getElementById('reports').innerText = data.total_reports;
 
-document.getElementById("users").innerText = data.total_users;
-document.getElementById("reports").innerText = data.total_reports;
+			const container = document.getElementById('reportList');
+			container.innerHTML = '';
+			data.reports.forEach(r => {
+				const div = document.createElement('div');
+				div.className = 'report-row';
+				div.style.display = 'flex'; div.style.alignItems='center'; div.style.justifyContent='space-between'; div.style.padding='10px 0'; div.style.borderBottom='1px solid #eee';
+				const left = document.createElement('div');
+				left.innerHTML = `<strong>${r.type || 'Unknown'}</strong> — ${r.location || ''} <br><small>${r.weight || ''} kg • ${r.timestamp || ''}</small>`;
+				const actions = document.createElement('div');
+				actions.innerHTML = `
+					${r.photo ? `<img src="/static/uploads/${encodeURIComponent(r.photo)}" width="80" style="border-radius:6px;margin-right:12px;">` : ''}
+					<button class="btn" onclick='(function(){ window.showReportModal(${JSON.stringify(r)}) })()'>Details</button>
+					<button class="btn" style="margin-left:8px;background:#e53e3e;color:#fff;" onclick="deleteReport(${r.id})">Delete</button>
+				`;
 
-const list = document.getElementById("reportList");
-list.innerHTML="";
+				div.appendChild(left); div.appendChild(actions);
+				container.appendChild(div);
+			});
+		}
 
-data.reports.forEach(r =>{
+		async function deleteReport(id){
+			if (!confirm('Delete report #' + id + '?')) return;
+			const res = await fetch('/api/admin/report/' + id, { method: 'DELETE' });
+			const j = await res.json();
+			if (!res.ok) return alert('Error: '+ (j.message || res.status));
+			alert('Deleted');
+			loadDashboard();
+		}
 
-const li = document.createElement("li");
-
-li.innerText = r.type + " waste at " + r.location + " (" + r.weight + "kg)";
-
-list.appendChild(li);
-
-});
-
-}
-
-loadDashboard();
-
-</script>
+		loadDashboard();
+	</script>
 
 </body>
 </html>
