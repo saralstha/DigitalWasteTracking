@@ -1,53 +1,36 @@
-async function loadReports() {
+<!DOCTYPE html>
+<html>
+<head>
+  <title>All Reports</title>
+</head>
+<body>
 
-  try {
+<h2>All Waste Reports</h2>
+<div id="list"></div>
 
-    const response = await fetch('/api/reports');
+<script>
+async function load(){
+  const res = await fetch('/api/reports');
+  const data = await res.json();
 
-    if (!response.ok) {
-      console.error("Failed to fetch reports");
-      return;
-    }
+  let html = '';
 
-    const reports = await response.json();
+  data.forEach(r => {
+    html += `
+      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+        <b>${r.type}</b><br>
+        Location: ${r.location}<br>
+        Weight: ${r.weight} kg<br>
+        ${r.photo ? `<img src="/static/uploads/${r.photo}" width="150">` : ''}
+      </div>
+    `;
+  });
 
-    if (!reports || reports.length === 0) {
-      console.log("No reports found");
-      return;
-    }
-
-    reports.forEach(report => {
-
-      // skip if coordinates missing
-      if (!report.lat || !report.lon) {
-        console.warn("Report missing coordinates:", report);
-        return;
-      }
-
-      const lat = parseFloat(report.lat);
-      const lon = parseFloat(report.lon);
-
-      const marker = L.marker([lat, lon]).addTo(map);
-
-      // photo path
-      let photoHTML = "";
-      if (report.photo) {
-        photoHTML = `<br><img src="static/uploads/${report.photo}" width="120" style="margin-top:5px;border-radius:5px;">`;
-      }
-
-      marker.bindPopup(`
-        <b>${report.type} Waste</b><br>
-        Weight: ${report.weight} kg<br>
-        Location: ${report.location}
-        ${photoHTML}
-      `);
-
-    });
-
-  } catch (error) {
-
-    console.error("Error loading reports:", error);
-
-  }
-
+  document.getElementById('list').innerHTML = html;
 }
+
+load();
+</script>
+
+</body>
+</html>
