@@ -3,5 +3,5 @@ Flask-SQLAlchemy
 Flask-Cors
 Werkzeug
 gunicorn
-psycopg[binary]
+psycopg2[binary]
 
